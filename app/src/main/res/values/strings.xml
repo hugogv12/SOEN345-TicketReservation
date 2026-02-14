@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Ticket Reservation</string>
+    <string name="welcome_phase1">Cloud-based ticket booking — Phase 1</string>
+</resources>
