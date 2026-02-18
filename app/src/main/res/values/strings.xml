@@ -2,4 +2,11 @@
     <string name="app_name">Ticket Reservation</string>
     <string name="welcome_phase1">Cloud-based ticket booking — Phase 1</string>
     <string name="events_title">Available events</string>
+    <string name="register">Register</string>
+    <string name="register_title">Create account</string>
+    <string name="email_hint">Email</string>
+    <string name="phone_hint">Phone number</string>
+    <string name="register_submit">Register</string>
+    <string name="register_need_email_or_phone">Enter email or phone number</string>
+    <string name="register_success">Registration received</string>
 </resources>
