@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="screen_padding_horizontal">20dp</dimen>
+    <dimen name="screen_padding_vertical">16dp</dimen>
+    <dimen name="section_gap">20dp</dimen>
+    <dimen name="block_gap">12dp</dimen>
+    <dimen name="element_gap">8dp</dimen>
+    <dimen name="card_corner">14dp</dimen>
+    <dimen name="card_corner_small">10dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+    <dimen name="card_elevation">2dp</dimen>
+    <dimen name="card_stroke">1dp</dimen>
+    <dimen name="content_max_width">560dp</dimen>
+    <dimen name="button_min_height">52dp</dimen>
+    <dimen name="event_card_gap">10dp</dimen>
+    <!-- Compact home screen + list rows (fit ~3 events on typical phone) -->
+    <dimen name="main_screen_pad_v">10dp</dimen>
+    <dimen name="main_panel_padding">10dp</dimen>
+    <dimen name="main_filter_padding">6dp</dimen>
+    <dimen name="main_panel_gap">6dp</dimen>
+    <dimen name="main_section_title_top">8dp</dimen>
+    <dimen name="main_bottom_padding">10dp</dimen>
+    <dimen name="event_card_padding">10dp</dimen>
+    <dimen name="event_card_gap_compact">6dp</dimen>
+</resources>
