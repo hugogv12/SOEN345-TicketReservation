@@ -33,6 +33,12 @@
         <activity
             android:name=".MyReservationsActivity"
             android:exported="false" />
+        <activity
+            android:name=".AdminActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminEventEditActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
