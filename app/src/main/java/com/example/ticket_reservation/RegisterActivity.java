@@ -17,6 +17,9 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
+        findViewById(R.id.button_back_to_menu).setOnClickListener(v ->
+                NavigationHelper.goToMainMenu(this));
+
         EditText emailInput = findViewById(R.id.register_email);
         EditText phoneInput = findViewById(R.id.register_phone);
         Button submitButton = findViewById(R.id.register_submit);
@@ -28,6 +31,8 @@ public class RegisterActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.register_need_email_or_phone, Toast.LENGTH_SHORT).show();
                 return;
             }
+            String userKey = !email.isEmpty() ? email : phone;
+            SessionPrefs.setUserKey(this, userKey);
             Toast.makeText(this, R.string.register_success, Toast.LENGTH_SHORT).show();
             finish();
         });
