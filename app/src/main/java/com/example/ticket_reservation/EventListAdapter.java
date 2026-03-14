@@ -15,9 +15,7 @@ import com.example.ticket_reservation.model.Event;
 
 import java.util.List;
 
-/**
- * Adapter to display a list of events (customer or admin styling).
- */
+
 public class EventListAdapter extends ArrayAdapter<Event> {
 
     private final boolean adminStyle;
