@@ -13,9 +13,7 @@ import com.example.ticket_reservation.model.Event;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Administrator view: all events (including canceled) and entry to add/edit.
- */
+
 public class AdminActivity extends AppCompatActivity {
 
     private EventRepository eventRepository;
