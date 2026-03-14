@@ -22,9 +22,7 @@ import com.example.ticket_reservation.model.Event;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-/**
- * Customer home: search/filter events and navigate to registration, reservations, or admin tools.
- */
+
 public class MainActivity extends AppCompatActivity {
 
     public static final String EXTRA_EVENT_ID = "event_id";
@@ -147,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
 
         List<String> catLabels = new ArrayList<>();
         catLabels.add(getString(R.string.spinner_all_categories));
-        catLabels.addAll(EventRepository.defaultCategoryLabels());
+        catLabels.addAll(eventRepository.distinctCategories());
         ArrayAdapter<String> catAdapter = new ArrayAdapter<>(this,
                 R.layout.item_spinner, catLabels);
         catAdapter.setDropDownViewResource(R.layout.item_spinner_dropdown);

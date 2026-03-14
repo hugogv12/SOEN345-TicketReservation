@@ -233,8 +233,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
+                android:descendantFocusability="blocksDescendants"
                 android:divider="@android:color/transparent"
                 android:dividerHeight="0dp"
+                android:drawSelectorOnTop="false"
+                android:listSelector="?attr/selectableItemBackground"
                 android:paddingBottom="4dp"
                 android:scrollbars="vertical" />
 
