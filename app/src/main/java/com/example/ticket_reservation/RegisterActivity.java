@@ -7,9 +7,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-/**
- * Registration screen: register using email or phone (requirement).
- */
+
 public class RegisterActivity extends AppCompatActivity {
 
     @Override
