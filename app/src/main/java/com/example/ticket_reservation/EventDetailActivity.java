@@ -15,9 +15,7 @@ import com.example.ticket_reservation.data.EventRepository;
 import com.example.ticket_reservation.model.Event;
 import com.google.android.material.textfield.TextInputEditText;
 
-/**
- * Event details and basic reservation form (no payment).
- */
+
 public class EventDetailActivity extends AppCompatActivity {
 
     @Override

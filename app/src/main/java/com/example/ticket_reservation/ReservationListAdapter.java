@@ -21,9 +21,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Lists the current user\'s reservations with cancel actions.
- */
+
 public class ReservationListAdapter extends ArrayAdapter<Reservation> {
 
     public interface OnCancelClickListener {

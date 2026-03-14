@@ -16,9 +16,7 @@ import com.example.ticket_reservation.model.Reservation;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Lists the signed-in user\'s reservations with cancel confirmation.
- */
+
 public class MyReservationsActivity extends AppCompatActivity implements ReservationListAdapter.OnCancelClickListener {
 
     private ListView listView;

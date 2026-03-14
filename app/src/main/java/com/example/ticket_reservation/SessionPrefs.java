@@ -3,12 +3,9 @@ package com.example.ticket_reservation;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-/**
- * Stores a simple user key after registration (email or phone) for reservations.
- */
+
 public final class SessionPrefs {
 
-    /** Preferences file name (public for instrumentation test setup). */
     public static final String PREFS_NAME = "ticket_reservation_session";
     private static final String KEY_USER = "user_key";
 

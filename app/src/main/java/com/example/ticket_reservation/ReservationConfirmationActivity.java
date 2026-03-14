@@ -6,9 +6,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-/**
- * Simple confirmation screen after a successful reservation.
- */
+
 public class ReservationConfirmationActivity extends AppCompatActivity {
 
     public static final String EXTRA_TITLE = "extra_title";
