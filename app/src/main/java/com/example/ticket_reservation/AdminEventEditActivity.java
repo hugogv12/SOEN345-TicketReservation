@@ -18,9 +18,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import java.util.Calendar;
 import java.util.List;
 
-/**
- * Create a new event or edit / cancel an existing one (admin).
- */
+
 public class AdminEventEditActivity extends AppCompatActivity {
 
     public static final String EXTRA_EVENT_ID = "admin_event_id";
