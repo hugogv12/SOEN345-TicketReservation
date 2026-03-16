@@ -22,9 +22,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static org.hamcrest.Matchers.anything;
 import static org.junit.Assert.assertEquals;
 
-/**
- * System-level UI tests (Espresso) for browse, search, register navigation, and event detail.
- */
+
 @RunWith(AndroidJUnit4.class)
 public class MainFlowInstrumentedTest {
 
