@@ -5,9 +5,7 @@ import com.example.ticket_reservation.model.Reservation;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * In-memory reservations for the current device session.
- */
+
 public class ReservationRepository {
 
     private static ReservationRepository instance;
