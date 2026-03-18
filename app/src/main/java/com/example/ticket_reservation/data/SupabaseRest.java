@@ -116,7 +116,8 @@ public final class SupabaseRest {
         }
     }
 
-    private static Event parseEvent(JSONObject o) throws JSONException {
+    /** Package-private for JVM tests: PostgREST {@code events} row → {@link Event}. */
+    static Event parseEvent(JSONObject o) throws JSONException {
         return new Event(
                 o.getString("id"),
                 o.getString("title"),
@@ -130,7 +131,8 @@ public final class SupabaseRest {
         );
     }
 
-    private static String normalizeTimeFromApi(Object raw) {
+    /** Package-private for JVM tests. */
+    static String normalizeTimeFromApi(Object raw) {
         if (raw == null || raw == JSONObject.NULL) {
             return "";
         }
@@ -144,7 +146,8 @@ public final class SupabaseRest {
         return s;
     }
 
-    private static Reservation parseReservation(JSONObject o) throws JSONException {
+    /** Package-private for JVM tests: PostgREST {@code reservations} row → {@link Reservation}. */
+    static Reservation parseReservation(JSONObject o) throws JSONException {
         return Reservation.createWithExistingId(
                 o.getString("id"),
                 o.getString("event_id"),
@@ -157,7 +160,8 @@ public final class SupabaseRest {
         );
     }
 
-    private static String normalizeIsoDate(String raw) {
+    /** Package-private for JVM tests. */
+    static String normalizeIsoDate(String raw) {
         if (raw != null && raw.length() >= 10) {
             return raw.substring(0, 10);
         }

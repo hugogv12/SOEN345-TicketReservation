@@ -97,6 +97,15 @@ class EventFilterTest {
     }
 
     @Test
+    @DisplayName("TC-F-05b: search is case-insensitive on title")
+    void searchTitleCaseInsensitive() {
+        FilterCriteria c = new FilterCriteria("SPORT", null, null, null);
+        List<Event> out = EventFilter.apply(events, c, false);
+        assertEquals(1, out.size());
+        assertEquals("Sports B", out.get(0).getTitle());
+    }
+
+    @Test
     @DisplayName("TC-F-06: combined AND filters")
     void combinedFilters() {
         FilterCriteria c = new FilterCriteria("con", "2026-03-15", "Montreal", "Concert");

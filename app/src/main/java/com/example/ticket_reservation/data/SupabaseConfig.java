@@ -10,11 +10,23 @@ public final class SupabaseConfig {
      */
     private static volatile boolean instrumentedLocalOnly;
 
+    /**
+     * When non-null, {@link #baseUrl()} and {@link #anonKey()} use these values (JVM MockWebServer
+     * contract tests only). Always call {@link #clearNetworkingTestOverrides()} in test teardown.
+     */
+    private static volatile String testBaseUrlOverride;
+    private static volatile String testAnonKeyOverride;
+
     private SupabaseConfig() {
     }
 
     public static void setInstrumentedLocalOnly(boolean localOnly) {
         instrumentedLocalOnly = localOnly;
+    }
+
+    /** Exposed for tests: whether the custom Android test runner forced offline / non-remote behaviour. */
+    public static boolean isInstrumentedLocalOnly() {
+        return instrumentedLocalOnly;
     }
 
     /** True when {@code local.properties} defines both {@code supabase.url} and {@code supabase.anon.key}. */
@@ -28,7 +40,7 @@ public final class SupabaseConfig {
     }
 
     static String baseUrl() {
-        String u = BuildConfig.SUPABASE_URL.trim();
+        String u = testBaseUrlOverride != null ? testBaseUrlOverride.trim() : BuildConfig.SUPABASE_URL.trim();
         while (u.endsWith("/")) {
             u = u.substring(0, u.length() - 1);
         }
@@ -36,6 +48,18 @@ public final class SupabaseConfig {
     }
 
     static String anonKey() {
-        return BuildConfig.SUPABASE_ANON_KEY.trim();
+        return testAnonKeyOverride != null ? testAnonKeyOverride.trim() : BuildConfig.SUPABASE_ANON_KEY.trim();
+    }
+
+    /** @see #testBaseUrlOverride */
+    static void setNetworkingTestOverrides(String baseUrl, String anonKey) {
+        testBaseUrlOverride = baseUrl;
+        testAnonKeyOverride = anonKey;
+    }
+
+    /** @see #testBaseUrlOverride */
+    static void clearNetworkingTestOverrides() {
+        testBaseUrlOverride = null;
+        testAnonKeyOverride = null;
     }
 }

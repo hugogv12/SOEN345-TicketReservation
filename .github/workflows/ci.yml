@@ -30,8 +30,9 @@ jobs:
         run: ./gradlew test --no-daemon
 
   instrumented-ui:
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
+    # ubuntu-latest can move to newer images where emulator/KVM behaviour differs; 22.04 stays predictable for x86_64 + KVM.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -40,18 +41,24 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # Required on ubuntu-latest for HW-accelerated x86_64 images; without this, Espresso often
-      # hits RootViewWithoutFocusException and EmulatorConsole can fail to attach to port 5554.
+      # Required on Linux for HW-accelerated x86_64 images; without this, Espresso often hits
+      # RootViewWithoutFocusException and the emulator can fail to boot cleanly.
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+
+      # Fail fast on compile errors and warm Gradle before the emulator step (shorter wall time under emulator-runner).
+      - name: Assemble debug and androidTest APKs
+        run: ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest --no-daemon --stacktrace
 
       - name: Run Espresso tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
@@ -59,10 +66,12 @@ jobs:
           api-level: 30
           arch: x86_64
           target: google_apis
-          profile: pixel_6
+          # Omit custom profile: "pixel_6" is not guaranteed across cmdline-tools versions and can break AVD creation.
           disable-animations: true
-          enable-hw-keyboard: true
+          enable-hw-keyboard: false
           force-avd-creation: true
+          emulator-boot-timeout: 900
+          channel: stable
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
             adb shell wm dismiss-keyguard || true
@@ -73,4 +82,4 @@ jobs:
             adb shell settings put global animator_duration_scale 0 || true
             adb shell input keyevent 224 || true
             adb shell input keyevent 82 || true
-            ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace
+            ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace

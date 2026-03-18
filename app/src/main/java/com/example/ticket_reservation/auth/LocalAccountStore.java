@@ -9,9 +9,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
 
+import com.example.ticket_reservation.logic.LoginIdentifier;
+
 /**
  * Offline demo accounts when Supabase is not configured (CI / local without keys).
- * Passwords stored as SHA-256 hex(salt + email + password).
+ * Passwords stored as SHA-256 hex(salt + canonicalId + password).
+ * {@code email} parameters are login identifiers: normalized the same way as {@link LoginIdentifier}
+ * so e.g. {@code (514) 555-0100} and {@code +15145550100} refer to one account.
  */
 public final class LocalAccountStore {
 
@@ -59,15 +63,32 @@ public final class LocalAccountStore {
         return nl > 0 ? stored.substring(0, nl) : "";
     }
 
-    private static String keyFor(String email) {
-        String norm = email.trim().toLowerCase(Locale.US);
-        return KEY_PREFIX + Base64.encodeToString(norm.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP);
+    /** Stable prefs key + hash input: canonical phone/email per {@link LoginIdentifier}, else trimmed lower. */
+    static String stableLoginId(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        String trimmed = raw.trim();
+        String normalized = LoginIdentifier.normalize(trimmed);
+        if (!normalized.isEmpty()) {
+            return normalized;
+        }
+        return trimmed.toLowerCase(Locale.US);
     }
 
-    private static String hash(String email, String password) {
+    /** Package-private for JVM tests (prefs key stability). */
+    static String keyFor(String email) {
+        String norm = stableLoginId(email);
+        return KEY_PREFIX
+                + Base64.encodeToString(norm.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP);
+    }
+
+    /** Package-private for JVM tests (deterministic hash contract). */
+    static String hash(String email, String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            String payload = SALT + "\n" + email.trim().toLowerCase(Locale.US) + "\n" + password;
+            String id = stableLoginId(email);
+            String payload = SALT + "\n" + id + "\n" + password;
             byte[] dig = md.digest(payload.getBytes(StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder(dig.length * 2);
             for (byte b : dig) {

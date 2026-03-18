@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -77,14 +76,14 @@ class BookingSingletonIntegrationTest {
         ReservationRepository reservations = ReservationRepository.getInstance();
         BookingService service = new BookingService(events, reservations, false);
 
-        Event small = null;
-        for (Event e : events.getAllEvents()) {
-            if (e.getCapacity() == 120) {
-                small = e;
-                break;
-            }
-        }
-        assertTrue(small != null);
+        Event small = Event.createNew(
+                "Integration capacity slice",
+                "2026-09-09",
+                "19:30",
+                "Test Arena",
+                "Concert",
+                120);
+        events.add(small);
 
         assertEquals(BookingService.BookResult.SUCCESS, service.book("a", small.getId(), 100));
         assertEquals(BookingService.BookResult.NOT_AVAILABLE, service.book("b", small.getId(), 30));

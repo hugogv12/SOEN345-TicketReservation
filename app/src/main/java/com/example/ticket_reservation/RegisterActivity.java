@@ -12,6 +12,7 @@ import com.example.ticket_reservation.auth.LocalAccountStore;
 import com.example.ticket_reservation.data.SupabaseAuth;
 import com.example.ticket_reservation.data.SupabaseAuth.AuthResult;
 import com.example.ticket_reservation.data.SupabaseConfig;
+import com.example.ticket_reservation.logic.LoginIdentifier;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.textfield.TextInputEditText;
@@ -92,7 +93,7 @@ public class RegisterActivity extends AppCompatActivity {
             authFormPanel.setVisibility(View.GONE);
             String u = SessionPrefs.getUsername(this);
             String e = SessionPrefs.getEmail(this);
-            String who = !u.isEmpty() ? u : (e.contains("@") ? e.substring(0, e.indexOf('@')) : e);
+            String who = !u.isEmpty() ? u : displayHandleFromContact(e);
             signedInDetails.setText(getString(R.string.signed_in_body, who, e));
         } else {
             signedInPanel.setVisibility(View.GONE);
@@ -108,10 +109,11 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void attemptSubmit() {
-        String email = text(emailInput);
+        String rawContact = text(emailInput);
+        String canonical = LoginIdentifier.normalize(rawContact);
         String password = text(passwordInput);
-        if (email.isEmpty() || !email.contains("@")) {
-            Toast.makeText(this, R.string.auth_invalid_email, Toast.LENGTH_SHORT).show();
+        if (!LoginIdentifier.isValidNormalized(canonical)) {
+            Toast.makeText(this, R.string.auth_invalid_contact, Toast.LENGTH_SHORT).show();
             return;
         }
         if (password.length() < 6) {
@@ -134,12 +136,15 @@ public class RegisterActivity extends AppCompatActivity {
             AuthAsyncIdling.enter();
             new Thread(() -> {
                 if (SupabaseConfig.isConfigured()) {
-                    AuthResult r = SupabaseAuth.signUp(email, password, username);
+                    String supabaseLogin = LoginIdentifier.isPhoneNormalized(canonical)
+                            ? LoginIdentifier.supabaseSyntheticEmail(canonical)
+                            : canonical;
+                    AuthResult r = SupabaseAuth.signUp(supabaseLogin, password, username);
                     runOnUiThread(() -> {
                         try {
                             submitButton.setEnabled(true);
                             if (r.success) {
-                                SessionPrefs.setSession(this, r.email, r.username, r.accessToken);
+                                SessionPrefs.setSession(this, canonical, r.username, r.accessToken);
                                 boolean hasToken = r.accessToken != null && !r.accessToken.isEmpty();
                                 Toast.makeText(this,
                                         hasToken ? R.string.register_success : R.string.register_confirm_email,
@@ -156,12 +161,12 @@ public class RegisterActivity extends AppCompatActivity {
                         }
                     });
                 } else {
-                    boolean ok = LocalAccountStore.register(this, email, username, password);
+                    boolean ok = LocalAccountStore.register(this, canonical, username, password);
                     runOnUiThread(() -> {
                         try {
                             submitButton.setEnabled(true);
                             if (ok) {
-                                SessionPrefs.setSession(this, email, username, null);
+                                SessionPrefs.setSession(this, canonical, username, null);
                                 Toast.makeText(this, R.string.register_success, Toast.LENGTH_SHORT).show();
                                 NavigationHelper.goToMainMenu(this);
                                 signalAuthAsyncIdleDone(true);
@@ -181,16 +186,19 @@ public class RegisterActivity extends AppCompatActivity {
             AuthAsyncIdling.enter();
             new Thread(() -> {
                 if (SupabaseConfig.isConfigured()) {
-                    AuthResult r = SupabaseAuth.signIn(email, password);
+                    String supabaseLogin = LoginIdentifier.isPhoneNormalized(canonical)
+                            ? LoginIdentifier.supabaseSyntheticEmail(canonical)
+                            : canonical;
+                    AuthResult r = SupabaseAuth.signIn(supabaseLogin, password);
                     runOnUiThread(() -> {
                         try {
                             submitButton.setEnabled(true);
                             if (r.success) {
                                 String displayName = r.username;
-                                if (displayName.isEmpty() && r.email.contains("@")) {
-                                    displayName = r.email.substring(0, r.email.indexOf('@'));
+                                if (displayName.isEmpty()) {
+                                    displayName = displayHandleFromContact(canonical);
                                 }
-                                SessionPrefs.setSession(this, r.email, displayName, r.accessToken);
+                                SessionPrefs.setSession(this, canonical, displayName, r.accessToken);
                                 Toast.makeText(this, R.string.sign_in_success, Toast.LENGTH_SHORT).show();
                                 NavigationHelper.goToMainMenu(this);
                                 signalAuthAsyncIdleDone(true);
@@ -204,13 +212,13 @@ public class RegisterActivity extends AppCompatActivity {
                         }
                     });
                 } else {
-                    boolean ok = LocalAccountStore.signIn(this, email, password);
+                    boolean ok = LocalAccountStore.signIn(this, canonical, password);
                     runOnUiThread(() -> {
                         try {
                             submitButton.setEnabled(true);
                             if (ok) {
-                                String un = LocalAccountStore.getUsername(this, email);
-                                SessionPrefs.setSession(this, email, un, null);
+                                String un = LocalAccountStore.getUsername(this, canonical);
+                                SessionPrefs.setSession(this, canonical, un, null);
                                 Toast.makeText(this, R.string.sign_in_success, Toast.LENGTH_SHORT).show();
                                 NavigationHelper.goToMainMenu(this);
                                 signalAuthAsyncIdleDone(true);
@@ -233,5 +241,15 @@ public class RegisterActivity extends AppCompatActivity {
             return "";
         }
         return e.getText().toString().trim();
+    }
+
+    private static String displayHandleFromContact(String contact) {
+        if (contact == null || contact.isEmpty()) {
+            return "";
+        }
+        if (contact.contains("@")) {
+            return contact.substring(0, contact.indexOf('@'));
+        }
+        return contact;
     }
 }

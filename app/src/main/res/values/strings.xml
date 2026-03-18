@@ -8,10 +8,10 @@
     <string name="events_empty">No events match your filters.\nTry adjusting search or filters, or clear the date.</string>
     <string name="register">Account</string>
     <string name="account_title">Account</string>
-    <string name="account_subtitle">Create an account or sign in to book and see your reservations.</string>
+    <string name="account_subtitle">Create an account with your email or phone number, or sign in to book and see your reservations.</string>
     <string name="mode_register">Create account</string>
     <string name="mode_sign_in">Sign in</string>
-    <string name="email_hint">Email</string>
+    <string name="email_hint">Email or phone</string>
     <string name="username_hint">Username</string>
     <string name="password_hint">Password</string>
     <string name="confirm_password_hint">Confirm password</string>
@@ -22,14 +22,14 @@
     <string name="sign_in_success">Signed in</string>
     <string name="sign_out">Sign out</string>
     <string name="signed_in_title">You are signed in</string>
-    <string name="signed_in_body">Username: %1$s\nEmail: %2$s</string>
+    <string name="signed_in_body">Username: %1$s\nContact: %2$s</string>
     <string name="signed_out_toast">Signed out</string>
-    <string name="auth_invalid_email">Enter a valid email address</string>
+    <string name="auth_invalid_contact">Enter a valid email or phone number (10+ digits)</string>
     <string name="auth_password_short">Password must be at least 6 characters</string>
     <string name="auth_username_short">Username must be at least 2 characters</string>
     <string name="auth_password_mismatch">Passwords do not match</string>
-    <string name="auth_email_taken">An account with this email already exists (offline mode)</string>
-    <string name="auth_sign_in_failed">Wrong email or password</string>
+    <string name="auth_email_taken">An account with this email or phone already exists (offline mode)</string>
+    <string name="auth_sign_in_failed">Wrong email, phone, or password</string>
 
     <string name="search_events_hint">Search by title</string>
     <string name="pick_date">Pick date</string>
@@ -68,6 +68,9 @@
     <string name="email_ticket_subject">Your tickets: %1$s</string>
     <string name="email_ticket_body">Hi,\n\nHere are your ticket details:\n\nEvent: %1$s\nDate: %2$s\nTickets: %3$d\n\n(This opens your email app — the app does not send mail by itself.)</string>
     <string name="email_ticket_no_app">No email app found</string>
+    <string name="sms_ticket">Text ticket</string>
+    <string name="sms_ticket_body">Tickets: %1$s | %2$s | qty %3$d — (opens your SMS app; the app does not send SMS by itself.)</string>
+    <string name="sms_ticket_no_app">No SMS app found</string>
     <string name="back_to_menu">Back to menu</string>
     <string name="admin_title">Event management</string>
     <string name="admin_events_section">All events</string>

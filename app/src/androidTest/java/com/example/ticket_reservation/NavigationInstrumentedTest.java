@@ -30,7 +30,7 @@ public class NavigationInstrumentedTest {
         onView(withId(R.id.admin_events_list)).check(matches(isDisplayed()));
         onView(withId(R.id.button_add_event)).check(matches(isDisplayed()));
         onView(withId(R.id.button_back_to_menu)).perform(click());
-        onView(withId(R.id.events_list)).check(matches(isDisplayed()));
+        onView(withId(R.id.events_recycler)).check(matches(isDisplayed()));
     }
 
     @Test
@@ -39,6 +39,6 @@ public class NavigationInstrumentedTest {
         // ListView is hidden when adapter is empty (empty view is shown instead).
         onView(withText(R.string.my_reservations)).check(matches(isDisplayed()));
         onView(withId(R.id.button_back_to_menu)).perform(click());
-        onView(withId(R.id.events_list)).check(matches(isDisplayed()));
+        onView(withId(R.id.events_recycler)).check(matches(isDisplayed()));
     }
 }

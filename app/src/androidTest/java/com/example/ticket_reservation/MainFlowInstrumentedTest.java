@@ -8,22 +8,21 @@ import androidx.test.espresso.idling.CountingIdlingResource;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.example.ticket_reservation.matchers.EventListMatchers;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static androidx.test.espresso.Espresso.onData;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
 import static androidx.test.espresso.action.ViewActions.replaceText;
 import static androidx.test.espresso.action.ViewActions.scrollTo;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem;
 import static androidx.test.espresso.matcher.RootMatchers.isDialog;
+import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
@@ -84,7 +83,7 @@ public class MainFlowInstrumentedTest {
         onView(withId(R.id.register_email)).check(matches(isDisplayed()));
         onView(withId(R.id.register_password)).check(matches(isDisplayed()));
         onView(withId(R.id.button_back_to_menu)).perform(click());
-        onView(withId(R.id.events_list)).check(matches(isDisplayed()));
+        onView(withId(R.id.events_recycler)).check(matches(isDisplayed()));
     }
 
     @Test
@@ -96,7 +95,7 @@ public class MainFlowInstrumentedTest {
         onView(withId(R.id.search_events)).perform(
                 replaceText(""),
                 closeSoftKeyboard());
-        onView(withId(R.id.events_list)).check(matches(isDisplayed()));
+        onView(withId(R.id.events_recycler)).check(matches(isDisplayed()));
     }
 
     @Test
@@ -104,14 +103,13 @@ public class MainFlowInstrumentedTest {
         onView(withId(R.id.search_events)).perform(
                 replaceText("Tech"),
                 closeSoftKeyboard());
-        onData(EventListMatchers.eventWithTitle(SEEDED_TECH_CONFERENCE))
-                .inAdapterView(withId(R.id.events_list))
-                .perform(scrollTo(), click());
+        onView(withId(R.id.events_recycler))
+                .perform(actionOnItem(hasDescendant(withText(SEEDED_TECH_CONFERENCE)), click()));
         onView(withId(R.id.detail_title)).check(matches(withText(SEEDED_TECH_CONFERENCE)));
         onView(withId(R.id.button_reserve)).perform(click());
         onView(withText(R.string.register_required_title)).inRoot(isDialog()).check(matches(isDisplayed()));
         onView(withText(android.R.string.cancel)).inRoot(isDialog()).perform(click());
         onView(withId(R.id.button_back_to_menu)).perform(click());
-        onView(withId(R.id.events_list)).check(matches(isDisplayed()));
+        onView(withId(R.id.events_recycler)).check(matches(isDisplayed()));
     }
 }

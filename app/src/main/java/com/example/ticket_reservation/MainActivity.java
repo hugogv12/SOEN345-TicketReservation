@@ -10,14 +10,12 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-
-import java.util.ArrayList;
-import java.util.List;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ticket_reservation.data.EventRepository;
 import com.example.ticket_reservation.data.SupabaseDataSync;
@@ -34,8 +32,9 @@ public class MainActivity extends AppCompatActivity {
     public static final String EXTRA_EVENT_ID = "event_id";
 
     private EventRepository eventRepository;
-    private ListView listView;
-    private EventListAdapter adapter;
+    private RecyclerView eventsRecycler;
+    private TextView eventsEmpty;
+    private HomeEventsAdapter eventsAdapter;
     private EditText searchInput;
     private TextView dateLabel;
     private Spinner locationSpinner;
@@ -54,11 +53,14 @@ public class MainActivity extends AppCompatActivity {
         dateLabel = findViewById(R.id.filter_date_label);
         locationSpinner = findViewById(R.id.spinner_location);
         categorySpinner = findViewById(R.id.spinner_category);
-        listView = findViewById(R.id.events_list);
-        listView.setEmptyView(findViewById(R.id.events_empty));
+        eventsRecycler = findViewById(R.id.events_recycler);
+        eventsEmpty = findViewById(R.id.events_empty);
+        dateLabel.setText(R.string.filter_date_none);
 
-        adapter = new EventListAdapter(this, displayed, false);
-        listView.setAdapter(adapter);
+        eventsRecycler.setLayoutManager(new LinearLayoutManager(this));
+        eventsRecycler.setNestedScrollingEnabled(false);
+        eventsAdapter = new HomeEventsAdapter(displayed, this::openEventDetail);
+        eventsRecycler.setAdapter(eventsAdapter);
 
         findViewById(R.id.button_pick_date).setOnClickListener(v -> showDatePicker());
         Button clearDate = findViewById(R.id.button_clear_date);
@@ -86,13 +88,6 @@ public class MainActivity extends AppCompatActivity {
         locationSpinner.setOnItemSelectedListener(new SimpleSelectionListener(() -> applyFilters()));
         categorySpinner.setOnItemSelectedListener(new SimpleSelectionListener(() -> applyFilters()));
 
-        listView.setOnItemClickListener((parent, view, position, id) -> {
-            Event e = displayed.get(position);
-            Intent i = new Intent(this, EventDetailActivity.class);
-            i.putExtra(EXTRA_EVENT_ID, e.getId());
-            startActivity(i);
-        });
-
         findViewById(R.id.button_register).setOnClickListener(v ->
                 startActivity(new Intent(this, RegisterActivity.class)));
 
@@ -104,6 +99,12 @@ public class MainActivity extends AppCompatActivity {
 
         populateFilterSpinners(null, null);
         SupabaseDataSync.refreshEventsAsync(this, eventRepository, this::applyFilters);
+    }
+
+    private void openEventDetail(Event e) {
+        Intent i = new Intent(this, EventDetailActivity.class);
+        i.putExtra(EXTRA_EVENT_ID, e.getId());
+        startActivity(i);
     }
 
     @Override
@@ -195,7 +196,10 @@ public class MainActivity extends AppCompatActivity {
         List<Event> filtered = EventFilter.apply(eventRepository.getAllEvents(), criteria, false);
         displayed.clear();
         displayed.addAll(filtered);
-        adapter.notifyDataSetChanged();
+        eventsAdapter.notifyDataSetChanged();
+        boolean empty = displayed.isEmpty();
+        eventsRecycler.setVisibility(empty ? View.GONE : View.VISIBLE);
+        eventsEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
     }
 
     private static final class SimpleSelectionListener implements android.widget.AdapterView.OnItemSelectedListener {

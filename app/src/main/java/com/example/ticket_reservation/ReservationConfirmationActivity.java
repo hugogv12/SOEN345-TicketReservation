@@ -2,6 +2,7 @@ package com.example.ticket_reservation;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -31,6 +32,9 @@ public class ReservationConfirmationActivity extends AppCompatActivity {
         Button emailBtn = findViewById(R.id.button_email_ticket);
         emailBtn.setOnClickListener(v -> openEmailComposer(title, date, qty));
 
+        Button smsBtn = findViewById(R.id.button_sms_ticket);
+        smsBtn.setOnClickListener(v -> openSmsComposer(title, date, qty));
+
         Button done = findViewById(R.id.button_done);
         done.setOnClickListener(v -> NavigationHelper.goToMainMenu(this));
     }
@@ -55,6 +59,21 @@ public class ReservationConfirmationActivity extends AppCompatActivity {
             startActivity(Intent.createChooser(intent, getString(R.string.email_ticket)));
         } catch (ActivityNotFoundException e) {
             Toast.makeText(this, R.string.email_ticket_no_app, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Opens the default SMS app with a prefilled body. Sending is completed by the user on-device
+     * (no carrier API or backend SMS in this project).
+     */
+    private void openSmsComposer(String title, String date, int qty) {
+        String body = getString(R.string.sms_ticket_body, title, date, qty);
+        Uri uri = Uri.parse("sms:").buildUpon().appendQueryParameter("body", body).build();
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        try {
+            startActivity(Intent.createChooser(intent, getString(R.string.sms_ticket)));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.sms_ticket_no_app, Toast.LENGTH_LONG).show();
         }
     }
 }

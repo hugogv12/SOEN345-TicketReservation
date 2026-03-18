@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * A user's ticket hold for an event (in-memory / local only; no payment).
+ * A user's ticket reservation for an event: quantity held and snapshots of event metadata.
  */
 public class Reservation {
 

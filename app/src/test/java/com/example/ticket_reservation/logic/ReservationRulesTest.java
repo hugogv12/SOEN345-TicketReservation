@@ -19,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li>TC-R-04: Request exceeding available tickets rejected.</li>
  *   <li>TC-R-05: Null event rejected.</li>
  *   <li>TC-R-06: Exact remaining capacity allowed.</li>
+ *   <li>TC-R-07: Single remaining ticket (last seat).</li>
+ *   <li>TC-R-08: Request equal to full empty capacity allowed.</li>
  * </ul>
  */
 @DisplayName("ReservationRules")
@@ -64,5 +66,19 @@ class ReservationRulesTest {
     @DisplayName("TC-R-06: exact availability")
     void exactAvailability() {
         assertTrue(ReservationRules.canReserve(active(10, 7), 3));
+    }
+
+    @Test
+    @DisplayName("TC-R-07: last seat available")
+    void lastSingleTicket() {
+        assertTrue(ReservationRules.canReserve(active(10, 9), 1));
+        assertFalse(ReservationRules.canReserve(active(10, 9), 2));
+    }
+
+    @Test
+    @DisplayName("TC-R-08: buy every ticket when none reserved yet")
+    void requestFullCapacityWhenEmpty() {
+        assertTrue(ReservationRules.canReserve(active(10, 0), 10));
+        assertFalse(ReservationRules.canReserve(active(10, 0), 11));
     }
 }

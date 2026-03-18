@@ -25,7 +25,7 @@ See **[TESTING.md](TESTING.md)** for test strategy, case outline, and how to run
 
 **Design (use cases, architecture, target DB/UML):** **[docs/DESIGN.md](docs/DESIGN.md)** — living spec with git history.
 
-**Persistence:** With **`supabase.url`** and **`supabase.anon.key`** in `local.properties`, the app loads events/reservations from **Supabase** (PostgREST + `book_event` / `cancel_reservation` RPCs). Without those keys, it falls back to **in-memory** sample data (used for CI/unit tests). SQL migrations live in **`supabase/migrations/`**.
+**Persistence:** With **`supabase.url`** and **`supabase.anon.key`** in `local.properties` (see **`local.properties.example`** for the template), the app loads events/reservations from **Supabase** (PostgREST + `book_event` / `cancel_reservation` RPCs). Without those keys, it falls back to **in-memory** sample data (used for CI/unit tests). SQL migrations live in **`supabase/migrations/`**.
 
 ## Project phases
 
@@ -35,6 +35,12 @@ See **[TESTING.md](TESTING.md)** for test strategy, case outline, and how to run
 | 2 | Requirements & design (use cases, architecture, DB) |
 | 3 | Core features (registration, events, reservations) |
 | 4 | Testing, report, presentation |
+
+## Evidence for grading (“Excellent” checklist)
+
+- **Requirements & design:** [`docs/DESIGN.md`](docs/DESIGN.md) — FR/NFR traceability (§2.3–2.4), implemented database (§3), UML in Mermaid (§4: use case, class, sequence including register + RPC).
+- **Testing & QA:** [`TESTING.md`](TESTING.md) — strategy, full test inventory, rubric mapping; [`docs/REPORT_TESTING_AND_CI.md`](docs/REPORT_TESTING_AND_CI.md) — copy-paste report text + screenshot checklist; [`docs/TESTING_AUDIT.md`](docs/TESTING_AUDIT.md) — keep/delete inventory, P0–P3 roadmap, CI and gaps.
+- **Collaboration:** [`.github/pull_request_template.md`](.github/pull_request_template.md); keep **Actions** green on `main` / `develop`.
 
 ## Team
 

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -82,5 +83,16 @@ class EventRepositoryTest {
         assertEquals(5, c.size());
         assertTrue(c.contains("Concert"));
         assertTrue(c.contains("Movie"));
+    }
+
+    @Test
+    @DisplayName("replaceAllFromRemote replaces catalog wholesale")
+    void replaceAllFromRemote() {
+        repo.add(Event.createNew("A", "2026-01-01", "", "L", "Concert", 1));
+        repo.add(Event.createNew("B", "2026-01-02", "", "L", "Sports", 2));
+        Event only = Event.createNew("Remote", "2026-06-01", "10:00", "Hall", "Movie", 50);
+        repo.replaceAllFromRemote(Collections.singletonList(only));
+        assertEquals(1, repo.getAllEvents().size());
+        assertEquals("Remote", repo.findById(only.getId()).getTitle());
     }
 }

@@ -7,10 +7,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -23,6 +25,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li>TC-B-03: Unknown event id returns EVENT_NOT_FOUND.</li>
  *   <li>TC-B-04: Cancel restores ticket availability and removes the reservation.</li>
  *   <li>TC-B-05: Cancel with wrong user key is rejected.</li>
+ *   <li>TC-B-06: Cancel unknown reservation id.</li>
+ *   <li>TC-B-07–TC-B-08: Non-positive quantity rejected.</li>
+ *   <li>TC-B-09: Two users cannot oversell remaining inventory.</li>
+ *   <li>TC-B-10: Reservation snapshots event title, date, location.</li>
+ *   <li>TC-B-11: Cancel after catalog cleared still removes reservation row.</li>
  * </ul>
  */
 @DisplayName("BookingService")
@@ -98,5 +105,48 @@ class BookingServiceTest {
     void zeroQuantityBook() {
         Event e = events.getAllEvents().get(0);
         assertEquals(BookingService.BookResult.NOT_AVAILABLE, service.book("u", e.getId(), 0));
+    }
+
+    @Test
+    @DisplayName("TC-B-08: negative quantity booking rejected")
+    void negativeQuantityBook() {
+        Event e = events.getAllEvents().get(0);
+        assertEquals(BookingService.BookResult.NOT_AVAILABLE, service.book("u", e.getId(), -2));
+    }
+
+    @Test
+    @DisplayName("TC-B-09: two users exhaust capacity without oversell")
+    void twoUsersExhaustCapacity() {
+        Event e = events.getAllEvents().get(0);
+        assertEquals(BookingService.BookResult.SUCCESS, service.book("alice", e.getId(), 3));
+        assertEquals(BookingService.BookResult.SUCCESS, service.book("bob", e.getId(), 2));
+        assertEquals(BookingService.BookResult.NOT_AVAILABLE, service.book("carol", e.getId(), 1));
+        assertEquals(5, events.findById(e.getId()).getTicketsReserved());
+        assertEquals(1, reservations.findByUser("alice").size());
+        assertEquals(1, reservations.findByUser("bob").size());
+    }
+
+    @Test
+    @DisplayName("TC-B-10: reservation snapshots catalog metadata")
+    void reservationSnapshotsEventFields() {
+        Event e = events.getAllEvents().get(0);
+        assertEquals(BookingService.BookResult.SUCCESS, service.book("pat", e.getId(), 1));
+        Reservation r = reservations.findByUser("pat").get(0);
+        assertEquals("Gig", r.getEventTitleSnapshot());
+        assertEquals("2026-05-01", r.getEventIsoDateSnapshot());
+        assertEquals("Venue", r.getEventLocationSnapshot());
+        assertEquals(e.getId(), r.getEventId());
+    }
+
+    @Test
+    @DisplayName("TC-B-11: cancel after event removed from catalog still drops reservation")
+    void cancelAfterCatalogCleared() {
+        Event e = events.getAllEvents().get(0);
+        assertEquals(BookingService.BookResult.SUCCESS, service.book("u", e.getId(), 2));
+        Reservation r = reservations.findByUser("u").get(0);
+        events.replaceAllFromRemote(Collections.emptyList());
+        assertNull(events.findById(e.getId()));
+        assertTrue(service.cancelReservation("u", r.getId()));
+        assertNull(reservations.findById(r.getId()));
     }
 }

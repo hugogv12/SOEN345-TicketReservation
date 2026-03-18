@@ -1,5 +1,7 @@
 *.iml
 .gradle
+# Local editor metadata (never commit)
+.cursor/
 /local.properties
 /.idea/caches
 /.idea/libraries

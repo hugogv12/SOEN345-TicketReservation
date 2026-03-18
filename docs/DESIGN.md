@@ -16,12 +16,13 @@ Keeping design docs **in the repo** (not only in the Wiki) means they **version 
 
 | Topic | Status |
 |--------|--------|
-| **Delivery model** | **Iterative.** The app is integrated continuously via Git and CI; this document is **not** a frozen “final product” spec. |
-| **Persistence today** | **Supabase (Postgres)** when `local.properties` defines `supabase.url` + `supabase.anon.key`; otherwise **in-memory** repositories for tests/CI. **Session** user key in `SharedPreferences`. |
-| **Database** | **Implemented:** app talks to Supabase via PostgREST; `supabase/migrations/` defines schema + RPCs. Sections below remain the logical/ER view for documentation. |
-| **Cloud / API** | **Target architecture** only; wiring to a live backend may follow the DB milestone. |
+| **Delivery model** | **Iterative.** Git + PRs + CI; design and migrations version with code. |
+| **Persistence** | **Supabase (Postgres + RPC)** when `local.properties` supplies `supabase.url` and `supabase.anon.key`; otherwise **in-memory** repositories (local dev without keys, fast JVM tests, CI build job without cloud secrets). |
+| **Identity** | **Supabase Auth** (email/password) when configured; **offline** accounts via `LocalAccountStore` (SHA-256 salted hash). Registration accepts **email or phone** (phone normalized to E.164-style `+`digits; Supabase uses a stable synthetic email alias for password grant only). Session `user_key` = canonical contact (email or `+`phone). |
+| **Catalog / bookings** | `EventRepository` / `ReservationRepository` sync from PostgREST; `BookingService` uses **`book_event` / `cancel_reservation` RPCs** for atomic inventory when remote; in-memory path uses the same business rules. |
+| **Notifications (customer)** | **Email** and **SMS** use device intents (`ReservationConfirmationActivity`) — no in-app SMTP or carrier API (explicit non-functional boundary: user completes send). |
 
-When the database layer is added, update this file (and diagrams if table names change) in the **same PR** as the implementation so design and code stay traceable.
+Schema and RPCs are defined under **`supabase/migrations/`**; update this document when migrations change.
 
 ---
 
@@ -55,118 +56,109 @@ When the database layer is added, update this file (and diagrams if table names 
 
 ### 2.1 Layers (logical)
 
-The **presentation** layer (Android Activities) handles UI and navigation. The **application** layer (`BookingService`, `EventFilter` / `FilterCriteria`, `ReservationRules`) orchestrates use cases without owning storage details. The **domain** holds `Event` and `Reservation`. The **data access** layer (`EventRepository`, `ReservationRepository`) abstracts storage: **in-memory today**, **API + DB** in the target system.
+The **presentation** layer (Activities) handles UI and navigation. The **application** layer (`BookingService`, `EventFilter`, `FilterCriteria`, `ReservationRules`, `LoginIdentifier`) encodes use-case rules. The **domain** holds `Event` and `Reservation`. The **data** layer (`EventRepository`, `ReservationRepository`, `SupabaseRest`, `SupabaseAuth`, `LocalAccountStore`) abstracts remote vs in-memory storage.
 
-Continuous integration validates that refactors to these layers still pass **unit** and **instrumented** tests as the codebase grows.
+**CI** runs **unit** tests on the JVM and **instrumented** Espresso tests on an emulator on every push/PR to `main` / `develop` (see [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).
 
-### 2.2 Target deployment (Mermaid)
+### 2.2 Deployment (implemented + boundaries)
 
 ```mermaid
 flowchart TB
-  subgraph Client["Mobile app (Android)"]
-    UI["Presentation\n(Activities)"]
-    APP["Application services\n(BookingService, EventFilter)"]
-    DOM["Domain\n(Event, Reservation, ReservationRules)"]
-    REPO["Data access\n(EventRepository, ReservationRepository)"]
+  subgraph Client["Android client"]
+    UI["Activities"]
+    APP["BookingService\nEventFilter / Rules\nLoginIdentifier"]
+    DOM["Event, Reservation"]
+    REPO["Repositories\nSupabaseRest / Auth"]
     UI --> APP
     APP --> DOM
     APP --> REPO
   end
 
-  GW["API gateway\n(optional)"]
-  SRV["Application server"]
-  DB[("Database\n(PostgreSQL — planned)")]
-  NOTIFY["Email / SMS\n(async)"]
-
-  REPO -.->|"future: HTTPS"| GW
-  GW -.-> SRV
-  SRV -.-> DB
-  SRV -.-> NOTIFY
-
-  style DB stroke-dasharray: 5 5
-  style GW stroke-dasharray: 5 5
-  style SRV stroke-dasharray: 5 5
-  style NOTIFY stroke-dasharray: 5 5
+  SB[("Supabase\nPostgres + RPC")]
+  GT["GoTrue\n/auth/v1"]
+  REPO -->|"HTTPS + anon key\nwhen configured"| SB
+  REPO --> GT
+  UI --> INTENTS["Email / SMS\n(device intents)"]
 ```
 
-**List events (target):** UI → repository client → API → DB → response → filtered list.
+**Browse / filter:** UI → `EventRepository` (memory or REST) → `EventFilter` → list.
 
-**Place reservation (target):** UI → `BookingService` → transactional API → DB update (event inventory + reservation row) → optional notification job.
+**Reserve:** UI → `BookingService` → in-memory `applyReservation` **or** `SupabaseRest.bookEvent` RPC (single transaction: `UPDATE events` + `INSERT reservations`).
+
+**Cancel:** `BookingService` → memory **or** `cancel_reservation` RPC (validates `user_key`, restores inventory).
+
+### 2.3 Functional requirements — traceability (Excellent / marking aid)
+
+| ID | Requirement | Primary implementation | Automated tests (examples) |
+|----|----------------|-------------------------|---------------------------|
+| FR-01 | Register with **email or phone** | `RegisterActivity`, `LoginIdentifier`, `LocalAccountStore` / `SupabaseAuth` | `LoginIdentifierTest`, `MainFlowInstrumentedTest`, `LocalAccountStoreInstrumentedTest` |
+| FR-02 | Browse & **search/filter** events | `MainActivity`, `EventFilter`, `FilterCriteria` | `EventFilterTest`, Espresso search empty state |
+| FR-03 | View event **detail** & availability | `EventDetailActivity`, `ReservationRules` | `MainFlowInstrumentedTest`, `ReservationRulesTest` |
+| FR-04 | **Reserve** tickets | `BookingService`, RPC `book_event` | `BookingServiceTest`, `BookingSingletonIntegrationTest`, instrumented singleton test |
+| FR-05 | **Confirmation** (+ share) | `ReservationConfirmationActivity` | Manual / UI smoke; email & SMS intents |
+| FR-06 | **List / cancel** own reservations | `MyReservationsActivity`, `BookingService.cancelReservation` | `BookingServiceTest`, `AdminAndUserBookingInstrumentedTest` |
+| FR-07–09 | **Admin** catalog CRUD / cancel flag | `AdminActivity`, `AdminEventEditActivity` | `AdminAndUserBookingInstrumentedTest`, repository tests |
+
+### 2.4 Non-functional requirements — evidence
+
+| NFR | Intent | How the project addresses it |
+|-----|--------|-------------------------------|
+| **Cloud-backed** | Data off-device when configured | Supabase Postgres + PostgREST; no secrets in repo (`local.properties`). |
+| **Availability** | Honest dependency on provider + network | Timeouts on HTTP; in-memory fallback for demos without keys; report should state single-region / no SLA claim. |
+| **Concurrent / consistent booking** | No oversell under contention | `book_event` RPC: single `UPDATE … WHERE capacity` then insert; mirrored rules in `ReservationRules` + `Event.applyReservation` for local mode. |
+| **Security (auth & session)** | Protect credentials; isolate users | Passwords hashed offline (`LocalAccountStore`); Supabase tokens in `SessionPrefs`; **wrong user cannot cancel** (`BookingServiceTest`); `SessionPrefsInstrumentedTest`. |
+| **Performance (responsiveness)** | UI stays usable | `EventFilterPerformanceTest` (large catalog filter budget). |
+| **Usability** | Simple Material UI + validation | Espresso main/register/detail flows; `RegisterValidationInstrumentedTest`. |
+| **Maintainability / quality** | Regression safety | Layered tests + CI on every PR; design versioned in repo. |
 
 ---
 
-## 3. Database design (target — not yet in app code)
+## 3. Database design (implemented — Supabase / Postgres)
 
-### 3.1 Tables (logical)
+**Source of truth:** SQL under `supabase/migrations/` (apply in timestamp order). Identity for reservations is the app’s **`user_key`** (email or normalized phone string), not a local `users` table — **Supabase Auth** holds auth users separately when cloud sign-in is used.
 
-| Table | PK | Purpose |
-|--------|-----|---------|
-| **users** | `user_id` | Customers and admins (`role`); optional `email` / `phone` uniqueness. |
-| **events** | `event_id` | Catalog: title, date, location, category, capacity, `tickets_reserved`, `canceled`. |
-| **reservations** | `reservation_id` | Links `user_id` + `event_id`, `quantity`, `status` (e.g. ACTIVE/CANCELED). |
+### 3.1 Physical tables (summary)
 
-### 3.2 ER diagram (Mermaid)
+| Table | Key columns | Purpose |
+|--------|-------------|---------|
+| **events** | `id`, `title`, `iso_date`, `start_time`, `location`, `category`, `canceled`, `capacity`, `tickets_reserved` | Catalog + live inventory counters. |
+| **reservations** | `id`, `event_id`, `user_key`, `quantity`, snapshot columns (`event_title_snapshot`, …) | One row per booking; snapshots preserve confirmation text if event edits later. |
+
+**RPCs:** `book_event(...)`, `cancel_reservation(...)` — `SECURITY DEFINER`, granted to `anon` / `authenticated` per migration (tighten for production beyond course scope).
+
+### 3.2 ER diagram (as deployed)
 
 ```mermaid
 erDiagram
-  USERS ||--o{ RESERVATIONS : places
-  EVENTS ||--o{ RESERVATIONS : "for"
-
-  USERS {
-    uuid user_id PK
-    varchar email UK
-    varchar phone UK
-    varchar role
-  }
+  EVENTS ||--o{ RESERVATIONS : "has"
 
   EVENTS {
-    uuid event_id PK
-    varchar title
-    date event_date
+    uuid id PK
+    text title
+    date iso_date
+    text start_time
+    text location
+    text category
+    boolean canceled
     int capacity
     int tickets_reserved
-    boolean canceled
   }
 
   RESERVATIONS {
-    uuid reservation_id PK
-    uuid user_id FK
+    uuid id PK
     uuid event_id FK
+    text user_key
     int quantity
-    varchar status
+    text event_title_snapshot
+    date event_iso_date_snapshot
+    text event_start_time_snapshot
+    text event_location_snapshot
   }
 ```
 
-### 3.3 Example SQL (PostgreSQL-style — implementation TBD)
+### 3.3 Logical evolution (optional future work)
 
-```sql
-CREATE TABLE users (
-  user_id    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email      VARCHAR(320) UNIQUE,
-  phone      VARCHAR(32) UNIQUE,
-  role       VARCHAR(16) NOT NULL CHECK (role IN ('CUSTOMER', 'ADMIN')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE events (
-  event_id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title            VARCHAR(500) NOT NULL,
-  event_date       DATE NOT NULL,
-  location         VARCHAR(500) NOT NULL,
-  category         VARCHAR(100) NOT NULL,
-  capacity         INT NOT NULL CHECK (capacity >= 0),
-  tickets_reserved INT NOT NULL DEFAULT 0,
-  canceled         BOOLEAN NOT NULL DEFAULT false
-);
-
-CREATE TABLE reservations (
-  reservation_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id        UUID NOT NULL REFERENCES users (user_id),
-  event_id       UUID NOT NULL REFERENCES events (event_id),
-  quantity       INT NOT NULL CHECK (quantity > 0),
-  status         VARCHAR(16) NOT NULL DEFAULT 'ACTIVE'
-);
-```
+A dedicated **`users`** table and admin `role` column could replace anonymous `user_key` strings and support stricter RLS (customer vs organizer). That is **not** required for the current rubric demo.
 
 ---
 
@@ -192,25 +184,35 @@ flowchart LR
   A --> Z[Cancel event]
 ```
 
-### 4.2 Class diagram (domain + services)
+### 4.2 Class diagram (domain + application + data touchpoints)
 
 ```mermaid
 classDiagram
+  direction TB
   class Event
   class Reservation
   class ReservationRules
   class FilterCriteria
   class EventFilter
+  class LoginIdentifier
   class EventRepository
   class ReservationRepository
   class BookingService
+  class SupabaseRest
+  class SupabaseAuth
+  class LocalAccountStore
+  class RegisterActivity
 
   BookingService --> EventRepository
   BookingService --> ReservationRepository
+  BookingService ..> SupabaseRest
   EventFilter ..> FilterCriteria
   EventFilter ..> Event
   ReservationRules ..> Event
-  Reservation --> Event : eventId
+  Reservation --> Event
+  RegisterActivity --> LoginIdentifier
+  RegisterActivity --> SupabaseAuth
+  RegisterActivity --> LocalAccountStore
 ```
 
 ### 4.3 Sequence — reserve tickets
@@ -218,16 +220,24 @@ classDiagram
 ```mermaid
 sequenceDiagram
   actor Customer
-  participant UI as Activity
+  participant UI as EventDetailActivity
   participant BS as BookingService
   participant ER as EventRepository
   participant RR as ReservationRepository
+  participant API as SupabaseRest (optional)
 
   Customer->>UI: Confirm quantity
   UI->>BS: book(userKey, eventId, qty)
-  BS->>ER: findById / applyReservation
-  BS->>RR: add(Reservation)
-  BS-->>UI: result
+  alt in-memory mode
+    BS->>ER: findById / applyReservation
+    BS->>RR: add(Reservation)
+  else Supabase configured
+    BS->>API: bookEvent RPC
+    API-->>BS: ok + reservation id
+    BS->>ER: replace from remote
+    BS->>RR: replace from remote
+  end
+  BS-->>UI: BookResult
   UI-->>Customer: Confirmation or error
 ```
 
@@ -236,7 +246,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   actor Customer
-  participant UI as Activity
+  participant UI as MyReservationsActivity
   participant BS as BookingService
   participant RR as ReservationRepository
   participant ER as EventRepository
@@ -249,18 +259,57 @@ sequenceDiagram
   BS-->>UI: ok / fail
 ```
 
+### 4.5 Sequence — register / sign-in (dual mode)
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant Reg as RegisterActivity
+  participant LI as LoginIdentifier
+  participant LA as LocalAccountStore
+  participant SA as SupabaseAuth
+  participant SP as SessionPrefs
+
+  User->>Reg: Submit email or phone + password
+  Reg->>LI: normalize / validate
+  alt offline demo
+    Reg->>LA: register / signIn
+    LA-->>Reg: ok / duplicate / wrong password
+  else Supabase configured
+    Reg->>SA: signUp / signIn (synthetic email if phone)
+    SA-->>Reg: AuthResult + token
+  end
+  Reg->>SP: setSession(canonical contact, …)
+```
+
+### 4.6 Sequence — cloud booking (atomic RPC)
+
+```mermaid
+sequenceDiagram
+  participant BS as BookingService
+  participant REST as SupabaseRest
+  participant DB as Postgres function book_event
+
+  BS->>REST: HTTPS POST RPC
+  REST->>DB: book_event(event_id, user_key, qty, snapshots…)
+  Note over DB: Single transaction: capacity check + update + insert
+  DB-->>REST: JSON ok / reason
+  REST-->>BS: parsed result
+```
+
 ---
 
-## 5. Assumptions
+## 5. Assumptions & explicit boundaries
 
-- Single currency; **no payment gateway** in current scope unless the course adds it.  
-- **CI** runs on each push/PR; failing tests block merges as team policy.  
-- **DB implementation** will align with this document; schema may gain audit columns (`created_at`, `updated_at`) when implemented.  
-- Email/SMS are **async** relative to the core reserve transaction in the target system.
+- **Reservations** reduce **available quantity** against each event’s **capacity**; inventory and user holds stay consistent in the local store and optional Supabase path.  
+- **Transactional email/SMS** (server-sent, queued) is **out of scope**; the app opens the user’s **email or SMS app** with a prefilled draft (`ReservationConfirmationActivity`) — suitable for coursework evidence of “confirmation channel” without operating an MTA.  
+- **RLS policies** in migrations are permissive for the course demo; production would narrow `anon` vs `authenticated` and tie `user_key` to JWT claims.  
+- **CI** should stay green on `main` / `develop`; teams should use **PR reviews** (see [`.github/pull_request_template.md`](../.github/pull_request_template.md)).
 
 ---
 
 ## Related docs
 
 - [REPORT_TESTING_AND_CI.md](REPORT_TESTING_AND_CI.md) — testing evidence for the report.  
-- [../TESTING.md](../TESTING.md) — how to run tests locally and in CI.
+- [../TESTING.md](../TESTING.md) — how to run tests locally and in CI.  
+- [TESTING_AUDIT.md](TESTING_AUDIT.md) — test keep/delete decisions, P0–P3 roadmap, CI notes, gaps.
