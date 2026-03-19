@@ -21,6 +21,7 @@ Android app (Java) for booking tickets to events: movies, concerts, travel, spor
 - **CI/CD:** GitHub Actions  
 - **VCS:** GitHub  
 
+See **[TESTING.md](TESTING.md)** for test strategy, case outline, and how to run unit vs instrumented tests.
 
 ## Project phases
 
