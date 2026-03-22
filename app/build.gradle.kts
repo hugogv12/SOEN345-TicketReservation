@@ -1,10 +1,23 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
 }
 
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.reader()?.use { load(it) }
+}
+
+fun String.escapeForBuildConfig(): String =
+    "\"" + replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
 android {
     namespace = "com.example.ticket_reservation"
     compileSdk = 34
+
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         applicationId = "com.example.ticket_reservation"
@@ -13,7 +26,12 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        val supabaseUrl = localProperties.getProperty("supabase.url", "").trim()
+        val supabaseAnon = localProperties.getProperty("supabase.anon.key", "").trim()
+        buildConfigField("String", "SUPABASE_URL", supabaseUrl.escapeForBuildConfig())
+        buildConfigField("String", "SUPABASE_ANON_KEY", supabaseAnon.escapeForBuildConfig())
+
+        testInstrumentationRunner = "com.example.ticket_reservation.TicketTestRunner"
         testInstrumentationRunnerArguments["disableAnimations"] = "true"
     }
 
@@ -43,6 +61,7 @@ dependencies {
     implementation(libs.constraintlayout)
     testImplementation(libs.junit)
     testImplementation(libs.junit.jupiter)
+    testImplementation(libs.junit.jupiter.params)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

@@ -17,8 +17,8 @@ Keeping design docs **in the repo** (not only in the Wiki) means they **version 
 | Topic | Status |
 |--------|--------|
 | **Delivery model** | **Iterative.** The app is integrated continuously via Git and CI; this document is **not** a frozen “final product” spec. |
-| **Persistence today** | **In-memory** repositories on the device (`EventRepository`, `ReservationRepository`) plus **session** user key in `SharedPreferences`, matching the current Android prototype. |
-| **Database** | **Not implemented in code yet.** Sections below describe the **target relational model** and ER/SQL for the **next** implementation step (e.g. Room, SQLite, or a remote API + PostgreSQL). |
+| **Persistence today** | **Supabase (Postgres)** when `local.properties` defines `supabase.url` + `supabase.anon.key`; otherwise **in-memory** repositories for tests/CI. **Session** user key in `SharedPreferences`. |
+| **Database** | **Implemented:** app talks to Supabase via PostgREST; `supabase/migrations/` defines schema + RPCs. Sections below remain the logical/ER view for documentation. |
 | **Cloud / API** | **Target architecture** only; wiring to a live backend may follow the DB milestone. |
 
 When the database layer is added, update this file (and diagrams if table names change) in the **same PR** as the implementation so design and code stay traceable.
