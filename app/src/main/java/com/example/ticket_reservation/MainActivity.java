@@ -58,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
         dateLabel.setText(R.string.filter_date_none);
 
         eventsRecycler.setLayoutManager(new LinearLayoutManager(this));
-        eventsRecycler.setNestedScrollingEnabled(false);
         eventsAdapter = new HomeEventsAdapter(displayed, this::openEventDetail);
         eventsRecycler.setAdapter(eventsAdapter);
 

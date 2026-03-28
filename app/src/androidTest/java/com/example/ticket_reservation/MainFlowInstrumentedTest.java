@@ -76,7 +76,8 @@ public class MainFlowInstrumentedTest {
 
     @Test
     public void user_togglesAccountToSignIn_seesFewerFields() {
-        onView(withId(R.id.button_register)).perform(scrollTo(), click());
+        // Footer actions are pinned; scrollTo() only works inside scrollable ancestors.
+        onView(withId(R.id.button_register)).perform(click());
         onView(withId(R.id.mode_sign_in)).perform(click());
         onView(withId(R.id.layout_username)).check(matches(not(isDisplayed())));
         onView(withId(R.id.layout_confirm_password)).check(matches(not(isDisplayed())));
@@ -106,7 +107,7 @@ public class MainFlowInstrumentedTest {
         onView(withId(R.id.events_recycler))
                 .perform(actionOnItem(hasDescendant(withText(SEEDED_TECH_CONFERENCE)), click()));
         onView(withId(R.id.detail_title)).check(matches(withText(SEEDED_TECH_CONFERENCE)));
-        onView(withId(R.id.button_reserve)).perform(click());
+        onView(withId(R.id.button_reserve)).perform(scrollTo(), click());
         onView(withText(R.string.register_required_title)).inRoot(isDialog()).check(matches(isDisplayed()));
         onView(withText(android.R.string.cancel)).inRoot(isDialog()).perform(click());
         onView(withId(R.id.button_back_to_menu)).perform(click());
