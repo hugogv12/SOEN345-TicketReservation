@@ -47,7 +47,7 @@ public class EventListAdapter extends ArrayAdapter<Event> {
             }
             title.setText(titleText);
             category.setText(event.getCategory());
-            metaLine.setText(event.getDateDisplay() + " · " + event.getLocation());
+            metaLine.setText(event.getDateTimeDisplay() + " · " + event.getLocation());
             availability.setText(getContext().getString(R.string.availability_format,
                     event.getAvailableTickets(), event.getCapacity()));
         }

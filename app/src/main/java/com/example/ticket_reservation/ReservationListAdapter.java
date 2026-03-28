@@ -57,6 +57,13 @@ public class ReservationListAdapter extends ArrayAdapter<Reservation> {
             }
             title.setText(r.getEventTitleSnapshot() + suffix);
             String dateDisplay = formatDisplay(r.getEventIsoDateSnapshot());
+            String timeSnap = r.getEventStartTimeSnapshot();
+            if (timeSnap != null && !timeSnap.isEmpty()) {
+                String td = Event.formatHhMmForDisplay(timeSnap, Locale.getDefault());
+                if (!td.isEmpty()) {
+                    dateDisplay = dateDisplay + " · " + td;
+                }
+            }
             String quantityLine = r.getQuantity() + " ticket(s)";
             meta.setText(quantityLine + " · " + dateDisplay + " · " + r.getEventLocationSnapshot());
 
