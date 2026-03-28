@@ -73,21 +73,11 @@ jobs:
           emulator-boot-timeout: 900
           channel: stable
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          # android-emulator-runner runs EACH non-empty, non-# line as its own `sh -c '...'`
+          # (see ReactiveCircus script-parser.js). Multi-line for/if/while will break with "expecting done".
+          # Boot is already waited inside the action before this script runs; keep one shell statement per line.
           script: |
-            set -e
             adb wait-for-device
-            # Avoid "device offline" / races where Gradle starts before the system is ready.
-            booted=""
-            for i in $(seq 1 90); do
-              booted=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)
-              if [ "$booted" = "1" ]; then break; fi
-              sleep 2
-            done
-            if [ "$booted" != "1" ]; then
-              echo "sys.boot_completed did not become 1 in time"
-              adb devices -l
-              exit 1
-            fi
             adb shell wm dismiss-keyguard || true
             adb shell cmd statusbar collapse || true
             adb shell settings put global heads_up_notifications_enabled 0 || true

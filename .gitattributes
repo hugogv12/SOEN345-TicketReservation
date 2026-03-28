@@ -1,0 +1,2 @@
+# Workflows should stay LF so YAML + runner shell are predictable on Ubuntu.
+.github/workflows/*.yml text eol=lf
