@@ -31,6 +31,11 @@ public class AdminActivity extends AppCompatActivity {
         findViewById(R.id.button_back_to_menu).setOnClickListener(v ->
                 NavigationHelper.goToMainMenu(this));
 
+        findViewById(R.id.button_admin_sign_out).setOnClickListener(v -> {
+            AdminSessionPrefs.clear(this);
+            NavigationHelper.goToMainMenu(this);
+        });
+
         listView = findViewById(R.id.admin_events_list);
         adapter = new EventListAdapter(this, rows, true);
         listView.setAdapter(adapter);

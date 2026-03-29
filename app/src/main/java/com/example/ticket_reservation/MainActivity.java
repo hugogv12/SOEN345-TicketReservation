@@ -93,8 +93,13 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.button_my_reservations).setOnClickListener(v ->
                 startActivity(new Intent(this, MyReservationsActivity.class)));
 
-        findViewById(R.id.button_admin).setOnClickListener(v ->
-                startActivity(new Intent(this, AdminActivity.class)));
+        findViewById(R.id.button_admin).setOnClickListener(v -> {
+            if (AdminSessionPrefs.hasAdminSession(this)) {
+                startActivity(new Intent(this, AdminActivity.class));
+            } else {
+                startActivity(new Intent(this, AdminAuthActivity.class));
+            }
+        });
 
         populateFilterSpinners(null, null);
         SupabaseDataSync.refreshEventsAsync(this, eventRepository, this::applyFilters);

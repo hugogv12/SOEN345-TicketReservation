@@ -72,6 +72,14 @@
                     android:text="@string/back_to_menu" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_admin_sign_out"
+                    style="@style/Widget.Ticket.Button.Text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/element_gap"
+                    android:text="@string/admin_sign_out" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/button_add_event"
                     style="@style/Widget.Ticket.Button.Primary"
                     android:layout_width="match_parent"
