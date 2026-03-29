@@ -73,9 +73,7 @@ jobs:
           emulator-boot-timeout: 900
           channel: stable
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          # android-emulator-runner runs EACH non-empty, non-# line as its own `sh -c '...'`
-          # (see ReactiveCircus script-parser.js). Multi-line for/if/while will break with "expecting done".
-          # Boot is already waited inside the action before this script runs; keep one shell statement per line.
+          # One shell statement per line: emulator-runner runs each line as a separate `sh -c` (no multi-line loops here).
           script: |
             adb wait-for-device
             adb shell wm dismiss-keyguard || true
