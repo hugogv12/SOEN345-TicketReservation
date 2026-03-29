@@ -2,6 +2,8 @@
 
 This document summarizes the **test strategy** and how to run tests for the rubric (unit, integration-style, and system/UI).
 
+**Acceptance tests AT-1 … AT-17 (issue-style, sprint record first week of March 2026):** [`docs/acceptance-tests/README.md`](docs/acceptance-tests/README.md) — optional `scripts/Create-AcceptanceIssues.ps1` to open GitHub issues (GitHub cannot backdate `created_at`; each file states the course timeline).
+
 ## Strategy overview
 
 | Level | Scope | Where | Purpose |
