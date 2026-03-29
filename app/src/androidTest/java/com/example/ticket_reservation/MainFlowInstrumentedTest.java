@@ -50,6 +50,10 @@ public class MainFlowInstrumentedTest {
                 .edit()
                 .clear()
                 .commit();
+        ctx.getSharedPreferences(AdminSessionPrefs.PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .clear()
+                .commit();
 
         authIdle = new CountingIdlingResource("auth");
         AuthAsyncIdling.setGate(new AuthAsyncIdling.Gate() {

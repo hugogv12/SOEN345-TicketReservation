@@ -1,8 +1,12 @@
 package com.example.ticket_reservation;
 
+import android.content.Context;
+
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,6 +26,13 @@ public class NavigationInstrumentedTest {
 
     @Rule
     public ActivityScenarioRule<MainActivity> mainRule = new ActivityScenarioRule<>(MainActivity.class);
+
+    @Before
+    public void seedAdminSessionForAdminNavigation() {
+        Context ctx = ApplicationProvider.getApplicationContext();
+        ctx.getSharedPreferences(AdminSessionPrefs.PREFS_NAME, Context.MODE_PRIVATE).edit().clear().commit();
+        AdminSessionPrefs.setSession(ctx, "instrumented-admin@test.local", "Instrumented Admin");
+    }
 
     @Test
     public void mainToAdmin_showsAdminList() {
