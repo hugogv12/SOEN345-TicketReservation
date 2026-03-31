@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ReservationRulesTest {
 
     private static Event active(int capacity, int reserved) {
-        return new Event("id", "T", "2026-01-01", "L", "C", false, capacity, reserved);
+        return new Event("id", "T", "2026-01-01", "", "L", "C", false, capacity, reserved);
     }
 
     @Test
@@ -37,7 +37,7 @@ class ReservationRulesTest {
     @Test
     @DisplayName("TC-R-02: canceled event blocked")
     void canceledBlocked() {
-        Event e = new Event("id", "T", "2026-01-01", "L", "C", true, 10, 0);
+        Event e = new Event("id", "T", "2026-01-01", "", "L", "C", true, 10, 0);
         assertFalse(ReservationRules.canReserve(e, 1));
     }
 
