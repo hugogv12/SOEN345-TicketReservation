@@ -23,7 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * <p>This complements {@link com.example.ticket_reservation.data.BookingServiceTest}, which injects
  * fresh repository instances per test (isolated unit-style). Here we verify the coordinated
- * behaviour when all layers share application-wide in-memory stores.</p>
+ * behaviour when all layers share application-wide stores. Uses {@code remotePersistence=false}
+ * so JVM tests never call the network even if {@code BuildConfig} has Supabase keys.</p>
  */
 @Tag("integration")
 @DisplayName("Booking pipeline (singleton integration)")
@@ -38,9 +39,9 @@ class BookingSingletonIntegrationTest {
     @Test
     @DisplayName("TC-I-01: book via singletons updates catalog and reservation store")
     void bookUpdatesBothStores() {
-        BookingService service = BookingService.getInstance();
         EventRepository events = EventRepository.getInstance();
         ReservationRepository reservations = ReservationRepository.getInstance();
+        BookingService service = new BookingService(events, reservations, false);
 
         Event first = events.getAllEvents().get(0);
         assertEquals(BookingService.BookResult.SUCCESS, service.book("integration-user", first.getId(), 2));
@@ -56,9 +57,9 @@ class BookingSingletonIntegrationTest {
     @Test
     @DisplayName("TC-I-02: cancel via singletons restores inventory and removes reservation")
     void cancelRestoresInventory() {
-        BookingService service = BookingService.getInstance();
         EventRepository events = EventRepository.getInstance();
         ReservationRepository reservations = ReservationRepository.getInstance();
+        BookingService service = new BookingService(events, reservations, false);
 
         Event first = events.getAllEvents().get(0);
         assertEquals(BookingService.BookResult.SUCCESS, service.book("u", first.getId(), 3));
@@ -72,8 +73,9 @@ class BookingSingletonIntegrationTest {
     @Test
     @DisplayName("TC-I-03: double booking respects remaining capacity across shared catalog")
     void capacitySharedAcrossCalls() {
-        BookingService service = BookingService.getInstance();
         EventRepository events = EventRepository.getInstance();
+        ReservationRepository reservations = ReservationRepository.getInstance();
+        BookingService service = new BookingService(events, reservations, false);
 
         Event small = null;
         for (Event e : events.getAllEvents()) {
