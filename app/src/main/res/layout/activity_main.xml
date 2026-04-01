@@ -20,4 +20,11 @@
         android:layout_marginTop="8dp"
         android:divider="?android:attr/listDivider"
         android:dividerHeight="1dp" />
+
+    <Button
+        android:id="@+id/button_register"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/register" />
 </LinearLayout>
