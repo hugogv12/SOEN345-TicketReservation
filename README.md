@@ -21,11 +21,6 @@ Android app (Java) for booking tickets to events: movies, concerts, travel, spor
 - **CI/CD:** GitHub Actions  
 - **VCS:** GitHub  
 
-## Run in Android Studio
-
-1. Clone the repo and open the project in **Android Studio**.
-2. Sync Gradle (File → Sync Project with Gradle Files).
-3. Run on emulator or device: **Run → Run 'app'** (or green Play button).
 
 ## Project phases
 
@@ -40,26 +35,8 @@ Android app (Java) for booking tickets to events: movies, concerts, travel, spor
 
 3 members. Progress reports every two weeks; presentation and report due **April 7th**.
 
-## Creating the GitHub repository
 
-1. **Create a new repo on GitHub**  
-   - Go to [github.com/new](https://github.com/new).  
-   - Name it e.g. `ticket-reservation` or `SOEN345-TicketReservation`.  
-   - Do **not** add a README, .gitignore, or license (this project already has them).
 
-2. **Push this project** (from project root):
-
-   ```bash
-   git init
-   git add .
-   git commit -m "Phase 1: Android project setup, MainActivity, JUnit 5, CI workflow"
-   git branch -M main
-   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-   git push -u origin main
-   ```
-
-3. **Add collaborators**  
-   Repo → Settings → Collaborators → add your 2 teammates.
 
 ## License & academic integrity
 
