@@ -1,6 +1,8 @@
 package com.example.ticket_reservation;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Button;
 import android.widget.ListView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -9,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Main screen: list of available events (requirement: view events).
+ * Main screen: list of available events and Register entry point.
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -21,6 +23,11 @@ public class MainActivity extends AppCompatActivity {
         List<Event> events = getSampleEvents();
         ListView listView = findViewById(R.id.events_list);
         listView.setAdapter(new EventListAdapter(this, events));
+
+        Button registerButton = findViewById(R.id.button_register);
+        registerButton.setOnClickListener(v -> {
+            startActivity(new Intent(this, RegisterActivity.class));
+        });
     }
 
     private List<Event> getSampleEvents() {
