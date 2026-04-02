@@ -11,6 +11,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.ticket_reservation.data.BookingService;
 import com.example.ticket_reservation.data.EventRepository;
 import com.example.ticket_reservation.data.ReservationRepository;
+import com.example.ticket_reservation.data.SupabaseConfig;
+import com.example.ticket_reservation.data.SupabaseDataSync;
 import com.example.ticket_reservation.model.Reservation;
 
 import java.util.ArrayList;
@@ -61,6 +63,15 @@ public class MyReservationsActivity extends AppCompatActivity implements Reserva
         }
         emptyMessage.setText(R.string.no_reservations);
         String userKey = SessionPrefs.getUserKey(this);
+        if (SupabaseConfig.isConfigured()) {
+            SupabaseDataSync.refreshReservationsAsync(this, userKey, reservationRepository, () -> {
+                List<Reservation> list = reservationRepository.findByUser(userKey);
+                rows.clear();
+                rows.addAll(list);
+                adapter.notifyDataSetChanged();
+            });
+            return;
+        }
         List<Reservation> list = reservationRepository.findByUser(userKey);
         rows.clear();
         rows.addAll(list);
@@ -73,12 +84,25 @@ public class MyReservationsActivity extends AppCompatActivity implements Reserva
                 .setTitle(R.string.cancel_reservation)
                 .setMessage(R.string.cancel_reservation_confirm)
                 .setPositiveButton(R.string.yes, (d, w) -> {
-                    boolean ok = bookingService.cancelReservation(
-                            SessionPrefs.getUserKey(this), reservation.getId());
-                    if (ok) {
-                        refresh();
+                    String uk = SessionPrefs.getUserKey(this);
+                    if (SupabaseConfig.isConfigured()) {
+                        new Thread(() -> {
+                            boolean ok = bookingService.cancelReservation(uk, reservation.getId());
+                            runOnUiThread(() -> {
+                                if (ok) {
+                                    refresh();
+                                } else {
+                                    Toast.makeText(this, R.string.reservation_failed, Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }).start();
                     } else {
-                        Toast.makeText(this, R.string.reservation_failed, Toast.LENGTH_SHORT).show();
+                        boolean ok = bookingService.cancelReservation(uk, reservation.getId());
+                        if (ok) {
+                            refresh();
+                        } else {
+                            Toast.makeText(this, R.string.reservation_failed, Toast.LENGTH_SHORT).show();
+                        }
                     }
                 })
                 .setNegativeButton(R.string.no, null)
