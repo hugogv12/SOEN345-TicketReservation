@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.ticket_reservation.data.BookingService;
 import com.example.ticket_reservation.data.EventRepository;
+import com.example.ticket_reservation.data.SupabaseConfig;
 import com.example.ticket_reservation.model.Event;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -49,7 +50,7 @@ public class EventDetailActivity extends AppCompatActivity {
 
         title.setText(event.getTitle());
         category.setText(event.getCategory());
-        date.setText(event.getDateDisplay());
+        date.setText(event.getDateTimeDisplay());
         location.setText(event.getLocation());
         refreshAvailability(availability, event);
 
@@ -124,6 +125,30 @@ public class EventDetailActivity extends AppCompatActivity {
         }
 
         String userKey = SessionPrefs.getUserKey(this);
+        if (SupabaseConfig.isConfigured()) {
+            new Thread(() -> {
+                BookingService.BookResult result = BookingService.getInstance()
+                        .book(userKey, live.getId(), qty);
+                runOnUiThread(() -> {
+                    if (result != BookingService.BookResult.SUCCESS) {
+                        Toast.makeText(this, R.string.reservation_failed, Toast.LENGTH_SHORT).show();
+                        Event refreshed = EventRepository.getInstance().findById(live.getId());
+                        if (refreshed != null) {
+                            refreshAvailability(availabilityView, refreshed);
+                        }
+                        return;
+                    }
+                    Intent confirm = new Intent(this, ReservationConfirmationActivity.class);
+                    confirm.putExtra(ReservationConfirmationActivity.EXTRA_TITLE, live.getTitle());
+                    confirm.putExtra(ReservationConfirmationActivity.EXTRA_QUANTITY, qty);
+                    confirm.putExtra(ReservationConfirmationActivity.EXTRA_DATE, live.getDateTimeDisplay());
+                    startActivity(confirm);
+                    finish();
+                });
+            }).start();
+            return;
+        }
+
         BookingService.BookResult result = BookingService.getInstance().book(userKey, live.getId(), qty);
         if (result != BookingService.BookResult.SUCCESS) {
             Toast.makeText(this, R.string.reservation_failed, Toast.LENGTH_SHORT).show();
@@ -134,7 +159,7 @@ public class EventDetailActivity extends AppCompatActivity {
         Intent confirm = new Intent(this, ReservationConfirmationActivity.class);
         confirm.putExtra(ReservationConfirmationActivity.EXTRA_TITLE, live.getTitle());
         confirm.putExtra(ReservationConfirmationActivity.EXTRA_QUANTITY, qty);
-        confirm.putExtra(ReservationConfirmationActivity.EXTRA_DATE, live.getDateDisplay());
+        confirm.putExtra(ReservationConfirmationActivity.EXTRA_DATE, live.getDateTimeDisplay());
         startActivity(confirm);
         finish();
     }
