@@ -8,7 +8,8 @@ import android.content.SharedPreferences;
  */
 public final class SessionPrefs {
 
-    private static final String PREFS = "ticket_reservation_session";
+    /** Preferences file name (public for instrumentation test setup). */
+    public static final String PREFS_NAME = "ticket_reservation_session";
     private static final String KEY_USER = "user_key";
 
     private SessionPrefs() {
@@ -27,6 +28,6 @@ public final class SessionPrefs {
     }
 
     private static SharedPreferences prefs(Context context) {
-        return context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        return context.getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 }
