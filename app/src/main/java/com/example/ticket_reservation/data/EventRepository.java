@@ -8,9 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * In-memory event store shared by customer, admin, and booking flows.
- */
+
 public class EventRepository {
 
     private static EventRepository instance;
@@ -47,6 +45,28 @@ public class EventRepository {
                 "Sports", 800));
         events.add(Event.createNew("Indie Film Night", "2026-04-02", "Cinéma du Parc, Montreal",
                 "Movie", 120));
+        events.add(Event.createNew("Charlevoix Flavour Train Weekend", "2026-05-10",
+                "Gare du Palais, Quebec City", "Travel", 45));
+        events.add(Event.createNew("Laurentian Shuttle & Spa Day", "2026-05-18",
+                "Jean-Talon Metro, Montreal", "Travel", 60));
+        events.add(Event.createNew("Alouettes Preseason Scrimmage", "2026-04-12",
+                "Percival Molson Stadium, Montreal", "Sports", 350));
+        events.add(Event.createNew("Montreal Jazz Evenings: Brass Session", "2026-04-28",
+                "MTelus, Montreal", "Concert", 280));
+        events.add(Event.createNew("FinTech Canada Forum", "2026-05-05",
+                "Fairmont Queen Elizabeth, Montreal", "Conference", 150));
+        events.add(Event.createNew("Dune Marathon IMAX", "2026-04-22",
+                "Cinéma Banque Scotia, Montreal", "Movie", 300));
+        events.add(Event.createNew("Eastern Townships Winery Circuit", "2026-06-02",
+                "Central Station, Montreal", "Travel", 55));
+        events.add(Event.createNew("PWHL Montreal Home Stand", "2026-03-30",
+                "Place Bell, Laval", "Sports", 420));
+        events.add(Event.createNew("Osheaga Afterdark: Analog Dreams", "2026-07-14",
+                "Parc Jean-Drapeau, Montreal", "Concert", 600));
+        events.add(Event.createNew("Design Systems at Scale", "2026-05-22",
+                "Phi Centre, Montreal", "Conference", 180));
+        events.add(Event.createNew("National Canadian Film Day Encore", "2026-04-17",
+                "Cinémathèque québécoise, Montreal", "Movie", 90));
     }
 
     public synchronized List<Event> getAllEvents() {
@@ -80,6 +100,17 @@ public class EventRepository {
         Set<String> set = new LinkedHashSet<>();
         for (Event e : events) {
             set.add(e.getLocation());
+        }
+        List<String> list = new ArrayList<>(set);
+        Collections.sort(list, String.CASE_INSENSITIVE_ORDER);
+        return list;
+    }
+
+
+    public synchronized List<String> distinctCategories() {
+        Set<String> set = new LinkedHashSet<>();
+        for (Event e : events) {
+            set.add(e.getCategory());
         }
         List<String> list = new ArrayList<>(set);
         Collections.sort(list, String.CASE_INSENSITIVE_ORDER);
