@@ -3,9 +3,12 @@ package com.example.ticket_reservation;
 import android.content.Context;
 
 import androidx.test.core.app.ApplicationProvider;
+import androidx.test.espresso.IdlingRegistry;
+import androidx.test.espresso.idling.CountingIdlingResource;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,13 +33,37 @@ public class MainFlowInstrumentedTest {
     public ActivityScenarioRule<MainActivity> mainActivityRule =
             new ActivityScenarioRule<>(MainActivity.class);
 
+    private CountingIdlingResource authIdle;
+
     @Before
-    public void clearSession() {
+    public void clearSessionAndAuthIdle() {
         Context ctx = ApplicationProvider.getApplicationContext();
         ctx.getSharedPreferences(SessionPrefs.PREFS_NAME, Context.MODE_PRIVATE)
                 .edit()
                 .clear()
                 .commit();
+
+        authIdle = new CountingIdlingResource("auth");
+        AuthAsyncIdling.setGate(new AuthAsyncIdling.Gate() {
+            @Override
+            public void enter() {
+                authIdle.increment();
+            }
+
+            @Override
+            public void exit() {
+                authIdle.decrement();
+            }
+        });
+        IdlingRegistry.getInstance().register(authIdle);
+    }
+
+    @After
+    public void tearDownAuthIdle() {
+        AuthAsyncIdling.setGate(null);
+        if (authIdle != null) {
+            IdlingRegistry.getInstance().unregister(authIdle);
+        }
     }
 
     @Test
@@ -63,9 +90,19 @@ public class MainFlowInstrumentedTest {
 
     @Test
     public void registerValidEmail_returnsToMain() {
+        String email = "espresso." + System.currentTimeMillis() + "@example.com";
         onView(withId(R.id.button_register)).perform(click());
         onView(withId(R.id.register_email)).perform(
-                replaceText("espresso.test@example.com"),
+                replaceText(email),
+                closeSoftKeyboard());
+        onView(withId(R.id.register_username)).perform(
+                replaceText("espresso_user"),
+                closeSoftKeyboard());
+        onView(withId(R.id.register_password)).perform(
+                replaceText("testpass1"),
+                closeSoftKeyboard());
+        onView(withId(R.id.register_password_confirm)).perform(
+                replaceText("testpass1"),
                 closeSoftKeyboard());
         onView(withId(R.id.register_submit)).perform(click());
         onView(withId(R.id.events_list)).check(matches(isDisplayed()));
