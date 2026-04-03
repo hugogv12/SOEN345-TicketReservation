@@ -1,7 +1,9 @@
 package com.example.ticket_reservation;
 
 import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
@@ -12,11 +14,15 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.ticket_reservation.data.EventRepository;
+import com.example.ticket_reservation.data.SupabaseConfig;
+import com.example.ticket_reservation.data.SupabaseRest;
 import com.example.ticket_reservation.model.Event;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 
 public class AdminEventEditActivity extends AppCompatActivity {
@@ -26,7 +32,10 @@ public class AdminEventEditActivity extends AppCompatActivity {
     private EventRepository eventRepository;
     private String editingId;
     private String isoDate;
+    /** HH:mm or empty */
+    private String startTimeHhMm;
     private TextView dateDisplay;
+    private TextView timeDisplay;
     private TextInputEditText titleInput;
     private TextInputEditText locationInput;
     private TextInputEditText capacityInput;
@@ -48,7 +57,10 @@ public class AdminEventEditActivity extends AppCompatActivity {
         capacityInput = findViewById(R.id.edit_capacity);
         categorySpinner = findViewById(R.id.edit_category_spinner);
         dateDisplay = findViewById(R.id.edit_date_display);
+        timeDisplay = findViewById(R.id.edit_time_display);
         Button pickDate = findViewById(R.id.button_event_pick_date);
+        Button pickTime = findViewById(R.id.button_event_pick_time);
+        Button clearTime = findViewById(R.id.button_event_clear_time);
         Button save = findViewById(R.id.button_save_event);
         markCanceledButton = findViewById(R.id.button_cancel_event_admin);
 
@@ -69,8 +81,10 @@ public class AdminEventEditActivity extends AppCompatActivity {
             capacityInput.setText(String.valueOf(existing.getCapacity()));
             isoDate = existing.getIsoDate();
             dateDisplay.setText(existing.getDateDisplay());
+            startTimeHhMm = existing.getStartTime() != null ? existing.getStartTime() : "";
+            refreshTimeDisplay();
             selectCategory(existing.getCategory());
-            markCanceledButton.setVisibility(android.view.View.VISIBLE);
+            markCanceledButton.setVisibility(View.VISIBLE);
             if (existing.isCanceled()) {
                 markCanceledButton.setEnabled(false);
             }
@@ -78,7 +92,9 @@ public class AdminEventEditActivity extends AppCompatActivity {
             Calendar today = Calendar.getInstance();
             isoDate = DateUtils.toIsoDate(today);
             dateDisplay.setText(formatDisplayFromIso(isoDate));
-            markCanceledButton.setVisibility(android.view.View.GONE);
+            startTimeHhMm = "19:00";
+            refreshTimeDisplay();
+            markCanceledButton.setVisibility(View.GONE);
         }
 
         pickDate.setOnClickListener(v -> {
@@ -99,6 +115,28 @@ public class AdminEventEditActivity extends AppCompatActivity {
             }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show();
         });
 
+        pickTime.setOnClickListener(v -> {
+            int h = 19;
+            int m = 0;
+            if (startTimeHhMm != null && startTimeHhMm.length() >= 5 && startTimeHhMm.charAt(2) == ':') {
+                try {
+                    h = Integer.parseInt(startTimeHhMm.substring(0, 2));
+                    m = Integer.parseInt(startTimeHhMm.substring(3, 5));
+                } catch (NumberFormatException ignored) {
+                    // keep default
+                }
+            }
+            new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+                startTimeHhMm = String.format(Locale.US, "%02d:%02d", hourOfDay, minute);
+                refreshTimeDisplay();
+            }, h, m, true).show();
+        });
+
+        clearTime.setOnClickListener(v -> {
+            startTimeHhMm = "";
+            refreshTimeDisplay();
+        });
+
         save.setOnClickListener(v -> saveEvent());
 
         markCanceledButton.setOnClickListener(v ->
@@ -108,6 +146,15 @@ public class AdminEventEditActivity extends AppCompatActivity {
                         .setPositiveButton(R.string.yes, (d, w) -> markCanceled())
                         .setNegativeButton(R.string.no, null)
                         .show());
+    }
+
+    private void refreshTimeDisplay() {
+        if (startTimeHhMm == null || startTimeHhMm.isEmpty()) {
+            timeDisplay.setText(R.string.event_time_not_set);
+        } else {
+            String nice = Event.formatHhMmForDisplay(startTimeHhMm, Locale.getDefault());
+            timeDisplay.setText(nice.isEmpty() ? startTimeHhMm : nice);
+        }
     }
 
     private void selectCategory(String category) {
@@ -146,9 +193,26 @@ public class AdminEventEditActivity extends AppCompatActivity {
             return;
         }
         String category = catItem.toString();
+        String timeStored = startTimeHhMm == null ? "" : startTimeHhMm.trim();
 
         if (editingId == null) {
-            Event created = Event.createNew(title, isoDate, location, category, capacity);
+            Event created = Event.createNew(title, isoDate, timeStored, location, category, capacity);
+            if (SupabaseConfig.isConfigured()) {
+                new Thread(() -> {
+                    try {
+                        SupabaseRest.insertEvent(created);
+                        runOnUiThread(() -> {
+                            eventRepository.add(created);
+                            Toast.makeText(this, R.string.event_saved, Toast.LENGTH_SHORT).show();
+                            finish();
+                        });
+                    } catch (IOException e) {
+                        runOnUiThread(() -> Toast.makeText(this, R.string.reservation_failed, Toast.LENGTH_SHORT)
+                                .show());
+                    }
+                }).start();
+                return;
+            }
             eventRepository.add(created);
         } else {
             Event existing = eventRepository.findById(editingId);
@@ -162,9 +226,25 @@ public class AdminEventEditActivity extends AppCompatActivity {
             }
             existing.setTitle(title);
             existing.setIsoDate(isoDate);
+            existing.setStartTime(timeStored);
             existing.setLocation(location);
             existing.setCategory(category);
             existing.setCapacity(capacity);
+            if (SupabaseConfig.isConfigured()) {
+                new Thread(() -> {
+                    try {
+                        SupabaseRest.updateEvent(existing);
+                        runOnUiThread(() -> {
+                            Toast.makeText(this, R.string.event_saved, Toast.LENGTH_SHORT).show();
+                            finish();
+                        });
+                    } catch (IOException e) {
+                        runOnUiThread(() -> Toast.makeText(this, R.string.reservation_failed, Toast.LENGTH_SHORT)
+                                .show());
+                    }
+                }).start();
+                return;
+            }
         }
         Toast.makeText(this, R.string.event_saved, Toast.LENGTH_SHORT).show();
         finish();
@@ -177,6 +257,21 @@ public class AdminEventEditActivity extends AppCompatActivity {
             return;
         }
         existing.setCanceled(true);
+        if (SupabaseConfig.isConfigured()) {
+            new Thread(() -> {
+                try {
+                    SupabaseRest.updateEvent(existing);
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, R.string.event_canceled_admin, Toast.LENGTH_SHORT).show();
+                        finish();
+                    });
+                } catch (IOException e) {
+                    runOnUiThread(() -> Toast.makeText(this, R.string.reservation_failed, Toast.LENGTH_SHORT)
+                            .show());
+                }
+            }).start();
+            return;
+        }
         Toast.makeText(this, R.string.event_canceled_admin, Toast.LENGTH_SHORT).show();
         finish();
     }
