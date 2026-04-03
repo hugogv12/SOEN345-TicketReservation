@@ -59,4 +59,9 @@ public class ReservationRepository {
     public synchronized void clear() {
         reservations.clear();
     }
+
+    public synchronized void replaceAllForUser(String userKey, List<Reservation> list) {
+        reservations.removeIf(r -> r.getUserKey().equals(userKey));
+        reservations.addAll(list);
+    }
 }
