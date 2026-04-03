@@ -31,7 +31,7 @@ See **[TESTING.md](TESTING.md)** for test strategy, case outline, and how to run
 
 | Phase | Focus |
 |-------|--------|
-| **1 (current)** | Project setup, runnable app, Git, CI skeleton |
+| 1 | Project setup, runnable app, Git, CI skeleton |
 | 2 | Requirements & design (use cases, architecture, DB) |
 | 3 | Core features (registration, events, reservations) |
 | 4 | Testing, report, presentation |
