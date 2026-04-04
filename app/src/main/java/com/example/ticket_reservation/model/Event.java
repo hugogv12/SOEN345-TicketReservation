@@ -2,6 +2,7 @@ package com.example.ticket_reservation.model;
 
 import com.example.ticket_reservation.logic.ReservationRules;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -11,24 +12,27 @@ import java.util.UUID;
 
 /**
  * Event shown to customers and managed by administrators.
- * Dates are stored as ISO-8601 date strings (yyyy-MM-dd) for simple filtering and API 24 compatibility.
+ * Dates are stored as ISO-8601 date strings (yyyy-MM-dd). Start time is optional HH:mm (24h).
  */
 public class Event {
 
     private final String id;
     private String title;
     private String isoDate;
+    /** Local start time HH:mm, or empty if not set */
+    private String startTime;
     private String location;
     private String category;
     private boolean canceled;
     private int capacity;
     private int ticketsReserved;
 
-    public Event(String id, String title, String isoDate, String location, String category,
+    public Event(String id, String title, String isoDate, String startTime, String location, String category,
                  boolean canceled, int capacity, int ticketsReserved) {
         this.id = Objects.requireNonNull(id);
         this.title = Objects.requireNonNull(title);
         this.isoDate = Objects.requireNonNull(isoDate);
+        this.startTime = normalizeStoredTime(startTime);
         this.location = Objects.requireNonNull(location);
         this.category = Objects.requireNonNull(category);
         this.canceled = canceled;
@@ -36,9 +40,9 @@ public class Event {
         this.ticketsReserved = ticketsReserved;
     }
 
-    public static Event createNew(String title, String isoDate, String location, String category,
+    public static Event createNew(String title, String isoDate, String startTime, String location, String category,
                                   int capacity) {
-        return new Event(UUID.randomUUID().toString(), title, isoDate, location, category,
+        return new Event(UUID.randomUUID().toString(), title, isoDate, startTime, location, category,
                 false, capacity, 0);
     }
 
@@ -61,6 +65,15 @@ public class Event {
 
     public void setIsoDate(String isoDate) {
         this.isoDate = isoDate;
+    }
+
+    /** HH:mm (24h) or empty */
+    public String getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(String startTime) {
+        this.startTime = normalizeStoredTime(startTime);
     }
 
     public String getLocation() {
@@ -134,6 +147,61 @@ public class Event {
         } catch (ParseException e) {
             return isoDate;
         }
+    }
+
+    /** Time only, e.g. 7:30 PM; empty string if no start time. */
+    public String getTimeDisplay(Locale locale) {
+        return formatHhMmForDisplay(startTime, locale);
+    }
+
+    /** Date and optional time for list/detail/confirm, e.g. "Mar 15, 2026 · 7:30 PM". */
+    public String getDateTimeDisplay(Locale locale) {
+        String d = getDateDisplay();
+        String t = getTimeDisplay(locale);
+        if (t.isEmpty()) {
+            return d;
+        }
+        return d + " · " + t;
+    }
+
+    /** Uses {@link Locale#getDefault()}. */
+    public String getDateTimeDisplay() {
+        return getDateTimeDisplay(Locale.getDefault());
+    }
+
+    public static String formatHhMmForDisplay(String hhmm, Locale locale) {
+        if (hhmm == null || hhmm.isEmpty()) {
+            return "";
+        }
+        String norm = normalizeStoredTime(hhmm);
+        if (norm.isEmpty()) {
+            return "";
+        }
+        try {
+            SimpleDateFormat in = new SimpleDateFormat("HH:mm", Locale.US);
+            in.setLenient(false);
+            Date parsed = in.parse(norm);
+            if (parsed == null) {
+                return hhmm;
+            }
+            return DateFormat.getTimeInstance(DateFormat.SHORT, locale).format(parsed);
+        } catch (ParseException e) {
+            return hhmm;
+        }
+    }
+
+    private static String normalizeStoredTime(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        String s = raw.trim();
+        if (s.isEmpty() || "null".equalsIgnoreCase(s)) {
+            return "";
+        }
+        if (s.length() >= 5 && s.charAt(2) == ':') {
+            return s.substring(0, 5);
+        }
+        return s;
     }
 
     @Override
