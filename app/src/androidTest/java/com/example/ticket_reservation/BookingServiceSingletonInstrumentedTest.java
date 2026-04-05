@@ -29,9 +29,9 @@ public class BookingServiceSingletonInstrumentedTest {
 
     @Test
     public void singletonBooking_roundTripOnDevice() {
-        BookingService service = BookingService.getInstance();
         EventRepository events = EventRepository.getInstance();
         ReservationRepository reservations = ReservationRepository.getInstance();
+        BookingService service = new BookingService(events, reservations, false);
 
         Event first = events.getAllEvents().get(0);
         assertEquals(BookingService.BookResult.SUCCESS, service.book("device-user", first.getId(), 1));

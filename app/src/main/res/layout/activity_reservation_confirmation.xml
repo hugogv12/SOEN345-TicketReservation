@@ -44,6 +44,14 @@
                 android:textColor="@color/on_surface" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_email_ticket"
+                style="@style/Widget.Ticket.Button.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/block_gap"
+                android:text="@string/email_ticket" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_done"
                 style="@style/Widget.Ticket.Button.Primary"
                 android:layout_width="match_parent"

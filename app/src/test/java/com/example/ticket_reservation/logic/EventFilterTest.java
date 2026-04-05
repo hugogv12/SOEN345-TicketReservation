@@ -35,9 +35,9 @@ class EventFilterTest {
     @BeforeEach
     void setUp() {
         events = new ArrayList<>();
-        events.add(new Event("a", "Concert A", "2026-03-15", "Montreal", "Concert", false, 100, 0));
-        events.add(new Event("b", "Sports B", "2026-03-20", "Montreal", "Sports", false, 200, 50));
-        events.add(new Event("c", "Canceled Gig", "2026-03-15", "Quebec City", "Concert", true, 50, 0));
+        events.add(new Event("a", "Concert A", "2026-03-15", "", "Montreal", "Concert", false, 100, 0));
+        events.add(new Event("b", "Sports B", "2026-03-20", "", "Montreal", "Sports", false, 200, 50));
+        events.add(new Event("c", "Canceled Gig", "2026-03-15", "", "Quebec City", "Concert", true, 50, 0));
     }
 
     @Nested

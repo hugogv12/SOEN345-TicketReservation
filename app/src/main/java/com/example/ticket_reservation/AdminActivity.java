@@ -8,6 +8,7 @@ import android.widget.ListView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.ticket_reservation.data.EventRepository;
+import com.example.ticket_reservation.data.SupabaseDataSync;
 import com.example.ticket_reservation.model.Event;
 
 import java.util.ArrayList;
@@ -49,8 +50,10 @@ public class AdminActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        rows.clear();
-        rows.addAll(eventRepository.getAllEvents());
-        adapter.notifyDataSetChanged();
+        SupabaseDataSync.refreshEventsAsync(this, eventRepository, () -> {
+            rows.clear();
+            rows.addAll(eventRepository.getAllEvents());
+            adapter.notifyDataSetChanged();
+        });
     }
 }
