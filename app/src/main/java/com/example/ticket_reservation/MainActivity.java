@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,6 +17,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.ticket_reservation.data.EventRepository;
+import com.example.ticket_reservation.data.SupabaseDataSync;
 import com.example.ticket_reservation.logic.EventFilter;
 import com.example.ticket_reservation.logic.FilterCriteria;
 import com.example.ticket_reservation.model.Event;
@@ -97,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, AdminActivity.class)));
 
         populateFilterSpinners(null, null);
-        applyFilters();
+        SupabaseDataSync.refreshEventsAsync(this, eventRepository, this::applyFilters);
     }
 
     @Override
@@ -105,8 +108,10 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         String prevLoc = readSpinnerValue(locationSpinner);
         String prevCat = readSpinnerValue(categorySpinner);
-        populateFilterSpinners(prevLoc, prevCat);
-        applyFilters();
+        SupabaseDataSync.refreshEventsAsync(this, eventRepository, () -> {
+            populateFilterSpinners(prevLoc, prevCat);
+            applyFilters();
+        });
     }
 
     private static String readSpinnerValue(Spinner spinner) {
@@ -198,12 +203,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) {
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
             onChange.run();
         }
 
         @Override
-        public void onNothingSelected(android.widget.AdapterView<?> parent) {
+        public void onNothingSelected(AdapterView<?> parent) {
             onChange.run();
         }
     }
