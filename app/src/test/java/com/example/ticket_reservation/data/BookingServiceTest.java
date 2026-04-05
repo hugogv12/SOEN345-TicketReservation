@@ -37,7 +37,7 @@ class BookingServiceTest {
         events = new EventRepository();
         reservations = new ReservationRepository();
         service = new BookingService(events, reservations);
-        events.add(Event.createNew("Gig", "2026-05-01", "Venue", "Concert", 5));
+        events.add(Event.createNew("Gig", "2026-05-01", "", "Venue", "Concert", 5));
     }
 
     @Test
@@ -85,5 +85,18 @@ class BookingServiceTest {
         service.book("alice", e.getId(), 1);
         Reservation r = reservations.findByUser("alice").get(0);
         assertFalse(service.cancelReservation("bob", r.getId()));
+    }
+
+    @Test
+    @DisplayName("TC-B-06: cancel unknown reservation id")
+    void cancelUnknownId() {
+        assertFalse(service.cancelReservation("alice", "nonexistent-reservation-id"));
+    }
+
+    @Test
+    @DisplayName("TC-B-07: zero quantity booking rejected")
+    void zeroQuantityBook() {
+        Event e = events.getAllEvents().get(0);
+        assertEquals(BookingService.BookResult.NOT_AVAILABLE, service.book("u", e.getId(), 0));
     }
 }
