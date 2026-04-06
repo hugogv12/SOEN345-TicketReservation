@@ -21,12 +21,17 @@ Android app (Java) for booking tickets to events: movies, concerts, travel, spor
 - **CI/CD:** GitHub Actions  
 - **VCS:** GitHub  
 
+See **[TESTING.md](TESTING.md)** for test strategy, case outline, and how to run unit vs instrumented tests. For **report copy-paste text and screenshot instructions**, see **[docs/REPORT_TESTING_AND_CI.md](docs/REPORT_TESTING_AND_CI.md)**.
+
+**Design (use cases, architecture, target DB/UML):** **[docs/DESIGN.md](docs/DESIGN.md)** — living spec with git history.
+
+**Persistence:** With **`supabase.url`** and **`supabase.anon.key`** in `local.properties`, the app loads events/reservations from **Supabase** (PostgREST + `book_event` / `cancel_reservation` RPCs). Without those keys, it falls back to **in-memory** sample data (used for CI/unit tests). SQL migrations live in **`supabase/migrations/`**.
 
 ## Project phases
 
 | Phase | Focus |
 |-------|--------|
-| **1 (current)** | Project setup, runnable app, Git, CI skeleton |
+| 1 | Project setup, runnable app, Git, CI skeleton |
 | 2 | Requirements & design (use cases, architecture, DB) |
 | 3 | Core features (registration, events, reservations) |
 | 4 | Testing, report, presentation |
@@ -34,9 +39,6 @@ Android app (Java) for booking tickets to events: movies, concerts, travel, spor
 ## Team
 
 3 members. Progress reports every two weeks; presentation and report due **April 7th**.
-
-
-
 
 ## License & academic integrity
 
