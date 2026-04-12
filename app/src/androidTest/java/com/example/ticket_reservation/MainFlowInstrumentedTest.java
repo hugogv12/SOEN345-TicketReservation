@@ -8,6 +8,8 @@ import androidx.test.espresso.idling.CountingIdlingResource;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.example.ticket_reservation.matchers.EventListMatchers;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -19,15 +21,22 @@ import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
 import static androidx.test.espresso.action.ViewActions.replaceText;
+import static androidx.test.espresso.action.ViewActions.scrollTo;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.RootMatchers.isDialog;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
-import static org.hamcrest.Matchers.anything;
-import static org.junit.Assert.assertEquals;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static org.hamcrest.Matchers.not;
 
-
+/**
+ * Focused main-screen flows that are not already covered by {@link AdminAndUserBookingInstrumentedTest}
+ * (search/clear, sign-in mode, guest reserve gate).
+ */
 @RunWith(AndroidJUnit4.class)
 public class MainFlowInstrumentedTest {
+
+    private static final String SEEDED_TECH_CONFERENCE = "Tech Conference";
 
     @Rule
     public ActivityScenarioRule<MainActivity> mainActivityRule =
@@ -67,63 +76,41 @@ public class MainFlowInstrumentedTest {
     }
 
     @Test
-    public void packageNameMatchesManifest() {
-        Context app = ApplicationProvider.getApplicationContext();
-        assertEquals("com.example.ticket_reservation", app.getPackageName());
-    }
-
-    @Test
-    public void mainScreen_showsEventListSearchAndRegister() {
-        onView(withId(R.id.events_list)).check(matches(isDisplayed()));
-        onView(withId(R.id.search_events)).check(matches(isDisplayed()));
-        onView(withId(R.id.button_register)).check(matches(isDisplayed()));
-    }
-
-    @Test
-    public void registerButton_opensRegisterForm_andBackReturns() {
-        onView(withId(R.id.button_register)).perform(click());
+    public void user_togglesAccountToSignIn_seesFewerFields() {
+        onView(withId(R.id.button_register)).perform(scrollTo(), click());
+        onView(withId(R.id.mode_sign_in)).perform(click());
+        onView(withId(R.id.layout_username)).check(matches(not(isDisplayed())));
+        onView(withId(R.id.layout_confirm_password)).check(matches(not(isDisplayed())));
         onView(withId(R.id.register_email)).check(matches(isDisplayed()));
-        onView(withId(R.id.register_submit)).check(matches(isDisplayed()));
+        onView(withId(R.id.register_password)).check(matches(isDisplayed()));
         onView(withId(R.id.button_back_to_menu)).perform(click());
         onView(withId(R.id.events_list)).check(matches(isDisplayed()));
     }
 
     @Test
-    public void registerValidEmail_returnsToMain() {
-        String email = "espresso." + System.currentTimeMillis() + "@example.com";
-        onView(withId(R.id.button_register)).perform(click());
-        onView(withId(R.id.register_email)).perform(
-                replaceText(email),
-                closeSoftKeyboard());
-        onView(withId(R.id.register_username)).perform(
-                replaceText("espresso_user"),
-                closeSoftKeyboard());
-        onView(withId(R.id.register_password)).perform(
-                replaceText("testpass1"),
-                closeSoftKeyboard());
-        onView(withId(R.id.register_password_confirm)).perform(
-                replaceText("testpass1"),
-                closeSoftKeyboard());
-        onView(withId(R.id.register_submit)).perform(click());
-        onView(withId(R.id.events_list)).check(matches(isDisplayed()));
-    }
-
-    @Test
-    public void searchWithNoMatch_showsEmptyState() {
+    public void user_filtersEventsBySearch_thenClearsSearch_seesListAgain() {
         onView(withId(R.id.search_events)).perform(
                 replaceText("no_match_for_sure_xyz"),
                 closeSoftKeyboard());
         onView(withId(R.id.events_empty)).check(matches(isDisplayed()));
+        onView(withId(R.id.search_events)).perform(
+                replaceText(""),
+                closeSoftKeyboard());
+        onView(withId(R.id.events_list)).check(matches(isDisplayed()));
     }
 
     @Test
-    public void clickFirstListItem_opensEventDetail() {
-        onData(anything())
+    public void guest_findsSeededConference_tapsReserve_seesSignInRequiredDialog() {
+        onView(withId(R.id.search_events)).perform(
+                replaceText("Tech"),
+                closeSoftKeyboard());
+        onData(EventListMatchers.eventWithTitle(SEEDED_TECH_CONFERENCE))
                 .inAdapterView(withId(R.id.events_list))
-                .atPosition(0)
-                .perform(click());
-        onView(withId(R.id.detail_title)).check(matches(isDisplayed()));
-        onView(withId(R.id.button_reserve)).check(matches(isDisplayed()));
+                .perform(scrollTo(), click());
+        onView(withId(R.id.detail_title)).check(matches(withText(SEEDED_TECH_CONFERENCE)));
+        onView(withId(R.id.button_reserve)).perform(click());
+        onView(withText(R.string.register_required_title)).inRoot(isDialog()).check(matches(isDisplayed()));
+        onView(withText(android.R.string.cancel)).inRoot(isDialog()).perform(click());
         onView(withId(R.id.button_back_to_menu)).perform(click());
         onView(withId(R.id.events_list)).check(matches(isDisplayed()));
     }
